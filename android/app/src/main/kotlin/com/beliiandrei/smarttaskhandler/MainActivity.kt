@@ -1,4 +1,4 @@
-package com.example.lab0_app
+package com.beliiandrei.smarttaskhandler
 
 import io.flutter.embedding.android.FlutterActivity
 
