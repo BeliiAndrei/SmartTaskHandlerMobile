@@ -11,6 +11,7 @@ class WarehouseTask {
     required this.status,
     required this.dueDate,
     required this.zone,
+    this.isFavorite = false,
   });
 
   final int id;
@@ -20,6 +21,7 @@ class WarehouseTask {
   final TaskStatus status;
   final DateTime dueDate;
   final String zone;
+  final bool isFavorite;
 
   WarehouseTask copyWith({
     String? title,
@@ -28,6 +30,7 @@ class WarehouseTask {
     TaskStatus? status,
     DateTime? dueDate,
     String? zone,
+    bool? isFavorite,
   }) {
     return WarehouseTask(
       id: id,
@@ -37,6 +40,7 @@ class WarehouseTask {
       status: status ?? this.status,
       dueDate: dueDate ?? this.dueDate,
       zone: zone ?? this.zone,
+      isFavorite: isFavorite ?? this.isFavorite,
     );
   }
 }

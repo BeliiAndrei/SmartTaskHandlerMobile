@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../data/mock_tasks.dart';
 import '../models/warehouse_task.dart';
+import '../services/task_logic.dart';
 import '../widgets/task_card.dart';
 import 'profile_screen.dart';
 import 'task_details_screen.dart';
@@ -31,18 +32,11 @@ class _TaskListPageState extends State<TaskListPage> {
   }
 
   List<WarehouseTask> get _visibleTasks {
-    final query = _searchController.text.trim().toLowerCase();
-
-    return _tasks.where((task) {
-      final matchesStatus =
-          _selectedStatus == null || task.status == _selectedStatus;
-      final matchesSearch =
-          query.isEmpty ||
-          task.title.toLowerCase().contains(query) ||
-          task.description.toLowerCase().contains(query) ||
-          task.zone.toLowerCase().contains(query);
-      return matchesStatus && matchesSearch;
-    }).toList();
+    return TaskLogic.filterTasks(
+      _tasks,
+      query: _searchController.text,
+      status: _selectedStatus,
+    );
   }
 
   @override
@@ -92,7 +86,11 @@ class _TaskListPageState extends State<TaskListPage> {
       ),
       body: switch (_currentSection) {
         0 => _buildTaskList(),
-        1 => TaskHistoryPage(tasks: _tasks, onTaskSelected: _openTask),
+        1 => TaskHistoryPage(
+          tasks: _tasks,
+          onTaskSelected: _openTask,
+          onFavoriteToggle: _toggleFavorite,
+        ),
         _ => ProfilePage(tasks: _tasks, onLogout: _logout),
       },
       floatingActionButton: _currentSection == 0
@@ -238,7 +236,11 @@ class _TaskListPageState extends State<TaskListPage> {
                   separatorBuilder: (_, _) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final task = visibleTasks[index];
-                    return TaskCard(task: task, onTap: () => _openTask(task));
+                    return TaskCard(
+                      task: task,
+                      onTap: () => _openTask(task),
+                      onFavoriteToggle: () => _toggleFavorite(task),
+                    );
                   },
                 ),
         ),
@@ -264,8 +266,7 @@ class _TaskListPageState extends State<TaskListPage> {
   }
 
   Future<void> _createTask() async {
-    final nextId =
-        _tasks.map((task) => task.id).reduce((a, b) => a > b ? a : b) + 1;
+    final nextId = TaskLogic.nextTaskId(_tasks);
     final result = await Navigator.push<WarehouseTask>(
       context,
       MaterialPageRoute(builder: (_) => TaskFormPage(taskId: nextId)),
@@ -292,6 +293,19 @@ class _TaskListPageState extends State<TaskListPage> {
           backgroundColor: const Color(0xFF15803D),
         ),
       );
+  }
+
+  void _toggleFavorite(WarehouseTask task) {
+    final index = _tasks.indexWhere((item) => item.id == task.id);
+    if (index == -1) return;
+
+    final updatedTask = TaskLogic.toggleFavorite(_tasks[index]);
+    setState(() => _tasks[index] = updatedTask);
+    _showSuccess(
+      updatedTask.isFavorite
+          ? 'Задача добавлена в избранное'
+          : 'Задача удалена из избранного',
+    );
   }
 
   void _logout() {

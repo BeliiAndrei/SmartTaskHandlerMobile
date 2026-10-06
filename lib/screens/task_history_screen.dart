@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/warehouse_task.dart';
+import '../services/task_logic.dart';
 import '../widgets/task_card.dart';
 
 class TaskHistoryPage extends StatelessWidget {
@@ -8,16 +9,16 @@ class TaskHistoryPage extends StatelessWidget {
     super.key,
     required this.tasks,
     required this.onTaskSelected,
+    required this.onFavoriteToggle,
   });
 
   final List<WarehouseTask> tasks;
   final ValueChanged<WarehouseTask> onTaskSelected;
+  final ValueChanged<WarehouseTask> onFavoriteToggle;
 
   @override
   Widget build(BuildContext context) {
-    final completedTasks = tasks
-        .where((task) => task.status == TaskStatus.completed)
-        .toList();
+    final completedTasks = TaskLogic.completedTasks(tasks);
 
     if (completedTasks.isEmpty) {
       return const Center(
@@ -90,7 +91,14 @@ class TaskHistoryPage extends StatelessWidget {
         ),
         const SizedBox(height: 18),
         for (final task in completedTasks) ...[
-          TaskCard(task: task, onTap: () => onTaskSelected(task)),
+          TaskCard(
+            task: task,
+            onTap: () => onTaskSelected(task),
+            onFavoriteToggle: () => onFavoriteToggle(task),
+            showPriority: false,
+            showDueDate: false,
+            showChevron: false,
+          ),
           const SizedBox(height: 12),
         ],
       ],

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../models/warehouse_task.dart';
+import '../services/task_logic.dart';
+import '../utils/task_formatters.dart';
+import '../widgets/favorite_button.dart';
 import '../widgets/labeled_value_row.dart';
 import 'task_form_screen.dart';
 import 'task_status_screen.dart';
@@ -38,6 +41,10 @@ class _TaskDetailsPageState extends State<TaskDetailsPage> {
         ),
         title: Text('Задача №${_task.id}'),
         actions: [
+          FavoriteButton(
+            isFavorite: _task.isFavorite,
+            onPressed: _toggleFavorite,
+          ),
           IconButton(
             onPressed: _editTask,
             tooltip: 'Редактировать',
@@ -119,13 +126,13 @@ class _TaskDetailsPageState extends State<TaskDetailsPage> {
                 LabeledValueRow(
                   icon: Icons.flag_outlined,
                   label: 'Приоритет',
-                  value: _priorityText(_task.priority),
+                  value: taskPriorityLabel(_task.priority),
                 ),
                 const Divider(height: 28),
                 LabeledValueRow(
                   icon: Icons.calendar_month_outlined,
                   label: 'Срок',
-                  value: _formatDate(_task.dueDate),
+                  value: formatTaskDate(_task.dueDate),
                 ),
                 const Divider(height: 28),
                 LabeledValueRow(
@@ -137,7 +144,7 @@ class _TaskDetailsPageState extends State<TaskDetailsPage> {
                 LabeledValueRow(
                   icon: Icons.sync_rounded,
                   label: 'Статус',
-                  value: _statusText(_task.status),
+                  value: taskStatusLabel(_task.status),
                 ),
               ],
             ),
@@ -202,6 +209,16 @@ class _TaskDetailsPageState extends State<TaskDetailsPage> {
     }
   }
 
+  void _toggleFavorite() {
+    setState(() => _task = TaskLogic.toggleFavorite(_task));
+    widget.onTaskChanged(_task);
+    _showSuccess(
+      _task.isFavorite
+          ? 'Задача добавлена в избранное'
+          : 'Задача удалена из избранного',
+    );
+  }
+
   void _showSuccess(String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -218,28 +235,5 @@ class _TaskDetailsPageState extends State<TaskDetailsPage> {
           backgroundColor: const Color(0xFF15803D),
         ),
       );
-  }
-
-  static String _priorityText(TaskPriority priority) {
-    return switch (priority) {
-      TaskPriority.low => 'Низкий',
-      TaskPriority.medium => 'Средний',
-      TaskPriority.high => 'Высокий',
-    };
-  }
-
-  static String _statusText(TaskStatus status) {
-    return switch (status) {
-      TaskStatus.newTask => 'Новая',
-      TaskStatus.inProgress => 'В работе',
-      TaskStatus.paused => 'Приостановлена',
-      TaskStatus.completed => 'Выполнена',
-    };
-  }
-
-  static String _formatDate(DateTime date) {
-    final day = date.day.toString().padLeft(2, '0');
-    final month = date.month.toString().padLeft(2, '0');
-    return '$day.$month.${date.year}';
   }
 }

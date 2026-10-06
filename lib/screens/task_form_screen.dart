@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/warehouse_task.dart';
+import '../utils/task_formatters.dart';
 
 class TaskFormPage extends StatefulWidget {
   const TaskFormPage({super.key, required this.taskId, this.task});
@@ -161,7 +162,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
                         color: Color(0xFF697386),
                       ),
                       const SizedBox(width: 12),
-                      Text(_formatDate(_dueDate)),
+                      Text(formatTaskDate(_dueDate)),
                       const Spacer(),
                       const Icon(Icons.chevron_right_rounded),
                     ],
@@ -212,6 +213,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
         status: _status,
         dueDate: _dueDate,
         zone: _zoneController.text.trim(),
+        isFavorite: widget.task?.isFavorite ?? false,
       ),
     );
   }
@@ -219,12 +221,6 @@ class _TaskFormPageState extends State<TaskFormPage> {
   static String? _requiredValidator(String? value) {
     if (value == null || value.trim().isEmpty) return 'Заполните поле';
     return null;
-  }
-
-  static String _formatDate(DateTime date) {
-    final day = date.day.toString().padLeft(2, '0');
-    final month = date.month.toString().padLeft(2, '0');
-    return '$day.$month.${date.year}';
   }
 }
 
