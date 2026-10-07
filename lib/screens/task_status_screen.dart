@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../data/mock_tasks.dart';
 import '../models/warehouse_task.dart';
 
 class TaskStatusPage extends StatefulWidget {
-  const TaskStatusPage({super.key, required this.currentStatus});
+  const TaskStatusPage({super.key, required this.id});
 
-  final TaskStatus currentStatus;
+  final int id;
 
   @override
   State<TaskStatusPage> createState() => _TaskStatusPageState();
@@ -17,11 +19,17 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
   @override
   void initState() {
     super.initState();
-    _selectedStatus = widget.currentStatus;
+    _selectedStatus = findMockTask(widget.id)?.status ?? TaskStatus.newTask;
   }
 
   @override
   Widget build(BuildContext context) {
+    if (findMockTask(widget.id) == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Задача не найдена')),
+        body: Center(child: Text('Задача №${widget.id} отсутствует')),
+      );
+    }
     return Scaffold(
       appBar: AppBar(title: const Text('Изменение статуса')),
       body: ListView(
@@ -37,7 +45,7 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Статус будет отображаться в общем списке и истории.',
+            'Выбор подтверждается локально. Сохранение в списке появится в L4.',
             style: TextStyle(color: Color(0xFF697386)),
           ),
           const SizedBox(height: 24),
@@ -84,7 +92,7 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
         child: SizedBox(
           height: 54,
           child: FilledButton(
-            onPressed: () => Navigator.pop(context, _selectedStatus),
+            onPressed: _save,
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFF3157D5),
             ),
@@ -100,6 +108,13 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
 
   void _selectStatus(TaskStatus status) {
     setState(() => _selectedStatus = status);
+  }
+
+  void _save() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Новый статус подтверждён (демо)')),
+    );
+    context.pop();
   }
 }
 

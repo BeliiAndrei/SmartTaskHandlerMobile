@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../data/mock_tasks.dart';
 import '../models/warehouse_task.dart';
 import '../widgets/labeled_value_row.dart';
 
 class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key, required this.tasks, required this.onLogout});
-
-  final List<WarehouseTask> tasks;
-  final VoidCallback onLogout;
+  const ProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final completed = tasks
+    final completed = mockTasks
         .where((task) => task.status == TaskStatus.completed)
         .length;
-    final active = tasks.length - completed;
+    final active = mockTasks.length - completed;
 
     return ListView(
       padding: const EdgeInsets.all(20),
@@ -157,7 +156,7 @@ class ProfilePage extends StatelessWidget {
       },
     );
 
-    if (confirmed == true) onLogout();
+    if (confirmed == true && context.mounted) context.go('/login');
   }
 }
 

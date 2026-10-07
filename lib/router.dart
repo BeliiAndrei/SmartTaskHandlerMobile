@@ -14,10 +14,7 @@ import 'widgets/app_shell.dart';
 final router = GoRouter(
   initialLocation: '/login',
   routes: [
-    GoRoute(
-      path: '/login',
-      builder: (context, state) => const AuthPage(),
-    ),
+    GoRoute(path: '/login', builder: (context, state) => const AuthPage()),
     GoRoute(
       path: '/register',
       builder: (context, state) => const AuthPage(isRegistration: true),

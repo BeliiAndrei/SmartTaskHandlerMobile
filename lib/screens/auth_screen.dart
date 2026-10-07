@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-
-import 'task_list_screen.dart';
+import 'package:go_router/go_router.dart';
 
 class AuthPage extends StatefulWidget {
-  const AuthPage({super.key});
+  const AuthPage({super.key, this.isRegistration = false});
+
+  final bool isRegistration;
 
   @override
   State<AuthPage> createState() => _AuthPageState();
@@ -11,33 +12,29 @@ class AuthPage extends StatefulWidget {
 
 class _AuthPageState extends State<AuthPage> {
   final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isLogin = true;
+  final _confirmController = TextEditingController();
   bool _hidePassword = true;
+
+  bool get _isLogin => !widget.isRegistration;
 
   @override
   void dispose() {
+    _emailController.dispose();
     _passwordController.dispose();
+    _confirmController.dispose();
     super.dispose();
   }
 
   void _selectMode(bool isLogin) {
-    setState(() {
-      _isLogin = isLogin;
-      _hidePassword = true;
-    });
-    _formKey.currentState?.reset();
-    _passwordController.clear();
+    context.go(isLogin ? '/login' : '/register');
   }
 
   void _submit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(
-        builder: (_) => const TaskListPage(logoutDestination: AuthPage()),
-      ),
-    );
+    context.go('/tasks');
   }
 
   @override
@@ -50,7 +47,9 @@ class _AuthPageState extends State<AuthPage> {
               padding: const EdgeInsets.all(24),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight - 48,
+                  minHeight: constraints.maxHeight > 48
+                      ? constraints.maxHeight - 48
+                      : 0,
                 ),
                 child: Center(
                   child: ConstrainedBox(
@@ -97,8 +96,8 @@ class _AuthPageState extends State<AuthPage> {
                                 const SizedBox(height: 8),
                                 Text(
                                   _isLogin
-                                      ? 'Введите данные своей учётной записи'
-                                      : 'Придумайте логин и пароль',
+                                      ? 'Введите e-mail и пароль'
+                                      : 'Укажите e-mail и придумайте пароль',
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
                                     color: Color(0xFF6B7280),
@@ -107,7 +106,7 @@ class _AuthPageState extends State<AuthPage> {
                                 ),
                                 const SizedBox(height: 26),
                                 const Text(
-                                  'Логин',
+                                  'E-mail',
                                   style: TextStyle(
                                     color: Color(0xFF374151),
                                     fontWeight: FontWeight.w600,
@@ -115,14 +114,20 @@ class _AuthPageState extends State<AuthPage> {
                                 ),
                                 const SizedBox(height: 8),
                                 TextFormField(
+                                  controller: _emailController,
+                                  keyboardType: TextInputType.emailAddress,
                                   textInputAction: TextInputAction.next,
                                   decoration: const InputDecoration(
-                                    hintText: 'Введите логин',
-                                    prefixIcon: Icon(Icons.badge_outlined),
+                                    hintText: 'name@example.com',
+                                    prefixIcon: Icon(Icons.email_outlined),
                                   ),
                                   validator: (value) {
                                     if (value == null || value.trim().isEmpty) {
-                                      return 'Введите логин';
+                                      return 'Введите e-mail';
+                                    }
+                                    if (!value.contains('@') ||
+                                        !value.split('@').last.contains('.')) {
+                                      return 'Введите корректный e-mail';
                                     }
                                     return null;
                                   },
@@ -164,8 +169,8 @@ class _AuthPageState extends State<AuthPage> {
                                     ),
                                   ),
                                   validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Введите пароль';
+                                    if (value == null || value.length < 6) {
+                                      return 'Пароль: минимум 6 символов';
                                     }
                                     return null;
                                   },
@@ -181,6 +186,7 @@ class _AuthPageState extends State<AuthPage> {
                                   ),
                                   const SizedBox(height: 8),
                                   TextFormField(
+                                    controller: _confirmController,
                                     obscureText: _hidePassword,
                                     textInputAction: TextInputAction.done,
                                     onFieldSubmitted: (_) => _submit(),

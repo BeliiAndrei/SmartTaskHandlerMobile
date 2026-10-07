@@ -1,18 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../data/mock_tasks.dart';
 import '../models/warehouse_task.dart';
 import '../services/task_logic.dart';
 import '../widgets/task_card.dart';
-import 'profile_screen.dart';
-import 'task_details_screen.dart';
-import 'task_form_screen.dart';
-import 'task_history_screen.dart';
 
 class TaskListPage extends StatefulWidget {
-  const TaskListPage({super.key, required this.logoutDestination});
-
-  final Widget logoutDestination;
+  const TaskListPage({super.key});
 
   @override
   State<TaskListPage> createState() => _TaskListPageState();
@@ -21,9 +16,6 @@ class TaskListPage extends StatefulWidget {
 class _TaskListPageState extends State<TaskListPage> {
   final _searchController = TextEditingController();
   TaskStatus? _selectedStatus;
-  int _currentSection = 0;
-
-  final List<WarehouseTask> _tasks = createMockTasks();
 
   @override
   void dispose() {
@@ -33,7 +25,7 @@ class _TaskListPageState extends State<TaskListPage> {
 
   List<WarehouseTask> get _visibleTasks {
     return TaskLogic.filterTasks(
-      _tasks,
+      mockTasks,
       query: _searchController.text,
       status: _selectedStatus,
     );
@@ -50,17 +42,17 @@ class _TaskListPageState extends State<TaskListPage> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              _sectionTitle,
-              style: const TextStyle(
+            const Text(
+              'Складские задачи',
+              style: TextStyle(
                 color: Color(0xFF172033),
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
               ),
             ),
-            Text(
-              _sectionSubtitle,
-              style: const TextStyle(
+            const Text(
+              'Назначенные задания',
+              style: TextStyle(
                 color: Color(0xFF697386),
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
@@ -84,66 +76,18 @@ class _TaskListPageState extends State<TaskListPage> {
           ),
         ],
       ),
-      body: switch (_currentSection) {
-        0 => _buildTaskList(),
-        1 => TaskHistoryPage(
-          tasks: _tasks,
-          onTaskSelected: _openTask,
-          onFavoriteToggle: _toggleFavorite,
+      body: _buildTaskList(),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.push('/tasks/new'),
+        backgroundColor: const Color(0xFF3157D5),
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add_rounded),
+        label: const Text(
+          'Новая задача',
+          style: TextStyle(fontWeight: FontWeight.w700),
         ),
-        _ => ProfilePage(tasks: _tasks, onLogout: _logout),
-      },
-      floatingActionButton: _currentSection == 0
-          ? FloatingActionButton.extended(
-              onPressed: _createTask,
-              backgroundColor: const Color(0xFF3157D5),
-              foregroundColor: Colors.white,
-              icon: const Icon(Icons.add_rounded),
-              label: const Text(
-                'Новая задача',
-                style: TextStyle(fontWeight: FontWeight.w700),
-              ),
-            )
-          : null,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentSection,
-        onDestinationSelected: (index) {
-          setState(() => _currentSection = index);
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.assignment_outlined),
-            selectedIcon: Icon(Icons.assignment_rounded),
-            label: 'Задачи',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.history_rounded),
-            label: 'История',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline_rounded),
-            selectedIcon: Icon(Icons.person_rounded),
-            label: 'Профиль',
-          ),
-        ],
       ),
     );
-  }
-
-  String get _sectionTitle {
-    return switch (_currentSection) {
-      0 => 'Складские задачи',
-      1 => 'История задач',
-      _ => 'Профиль',
-    };
-  }
-
-  String get _sectionSubtitle {
-    return switch (_currentSection) {
-      0 => 'Сегодня, 16 сентября',
-      1 => 'Выполненные задания',
-      _ => 'Данные сотрудника',
-    };
   }
 
   Widget _buildTaskList() {
@@ -238,43 +182,16 @@ class _TaskListPageState extends State<TaskListPage> {
                     final task = visibleTasks[index];
                     return TaskCard(
                       task: task,
-                      onTap: () => _openTask(task),
-                      onFavoriteToggle: () => _toggleFavorite(task),
+                      onTap: () => context.push('/tasks/${task.id}'),
+                      onFavoriteToggle: () => _showSuccess(
+                        'Избранное: действие подтверждено (демо)',
+                      ),
                     );
                   },
                 ),
         ),
       ],
     );
-  }
-
-  Future<void> _openTask(WarehouseTask task) async {
-    await Navigator.push<void>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => TaskDetailsPage(
-          task: task,
-          onTaskChanged: (updatedTask) {
-            final index = _tasks.indexWhere(
-              (item) => item.id == updatedTask.id,
-            );
-            if (index != -1) setState(() => _tasks[index] = updatedTask);
-          },
-        ),
-      ),
-    );
-  }
-
-  Future<void> _createTask() async {
-    final nextId = TaskLogic.nextTaskId(_tasks);
-    final result = await Navigator.push<WarehouseTask>(
-      context,
-      MaterialPageRoute(builder: (_) => TaskFormPage(taskId: nextId)),
-    );
-    if (result != null && mounted) {
-      setState(() => _tasks.insert(0, result));
-      _showSuccess('Задача создана');
-    }
   }
 
   void _showSuccess(String message) {
@@ -293,26 +210,6 @@ class _TaskListPageState extends State<TaskListPage> {
           backgroundColor: const Color(0xFF15803D),
         ),
       );
-  }
-
-  void _toggleFavorite(WarehouseTask task) {
-    final index = _tasks.indexWhere((item) => item.id == task.id);
-    if (index == -1) return;
-
-    final updatedTask = TaskLogic.toggleFavorite(_tasks[index]);
-    setState(() => _tasks[index] = updatedTask);
-    _showSuccess(
-      updatedTask.isFavorite
-          ? 'Задача добавлена в избранное'
-          : 'Задача удалена из избранного',
-    );
-  }
-
-  void _logout() {
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<void>(builder: (_) => widget.logoutDestination),
-      (_) => false,
-    );
   }
 }
 

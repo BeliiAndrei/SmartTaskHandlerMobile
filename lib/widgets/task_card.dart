@@ -136,18 +136,22 @@ class TaskCard extends StatelessWidget {
                           : const Color(0xFF697386),
                     ),
                     const SizedBox(width: 6),
-                    Text(
-                      'Срок: ${formatTaskDate(task.dueDate)}',
-                      style: TextStyle(
-                        color: isOverdue
-                            ? const Color(0xFFDC2626)
-                            : const Color(0xFF697386),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                    Expanded(
+                      child: Text(
+                        'Срок: ${formatTaskDate(task.dueDate)}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: isOverdue
+                              ? const Color(0xFFDC2626)
+                              : const Color(0xFF697386),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                     if (isOverdue) ...[
-                      const Spacer(),
+                      const SizedBox(width: 6),
                       const TaskBadge(
                         text: 'Просрочено',
                         color: Color(0xFFDC2626),

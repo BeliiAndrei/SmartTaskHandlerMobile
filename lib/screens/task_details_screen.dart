@@ -1,52 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
-import '../models/warehouse_task.dart';
-import '../services/task_logic.dart';
+import '../data/mock_tasks.dart';
 import '../utils/task_formatters.dart';
 import '../widgets/favorite_button.dart';
 import '../widgets/labeled_value_row.dart';
-import 'task_form_screen.dart';
-import 'task_status_screen.dart';
 
-class TaskDetailsPage extends StatefulWidget {
-  const TaskDetailsPage({
-    super.key,
-    required this.task,
-    required this.onTaskChanged,
-  });
+class TaskDetailsPage extends StatelessWidget {
+  const TaskDetailsPage({super.key, required this.id});
 
-  final WarehouseTask task;
-  final ValueChanged<WarehouseTask> onTaskChanged;
-
-  @override
-  State<TaskDetailsPage> createState() => _TaskDetailsPageState();
-}
-
-class _TaskDetailsPageState extends State<TaskDetailsPage> {
-  late WarehouseTask _task;
-
-  @override
-  void initState() {
-    super.initState();
-    _task = widget.task;
-  }
+  final int id;
 
   @override
   Widget build(BuildContext context) {
+    final task = findMockTask(id);
+    if (task == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Задача не найдена')),
+        body: Center(child: Text('Задача №$id отсутствует в mock-данных')),
+      );
+    }
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back_rounded),
-        ),
-        title: Text('Задача №${_task.id}'),
+        title: Text('Задача №${task.id}'),
         actions: [
           FavoriteButton(
-            isFavorite: _task.isFavorite,
-            onPressed: _toggleFavorite,
+            isFavorite: task.isFavorite,
+            onPressed: () => _showSuccess(
+              context,
+              'Избранное: действие подтверждено (демо)',
+            ),
           ),
           IconButton(
-            onPressed: _editTask,
+            onPressed: () => _editTask(context),
             tooltip: 'Редактировать',
             icon: const Icon(Icons.edit_outlined),
           ),
@@ -70,7 +56,7 @@ class _TaskDetailsPageState extends State<TaskDetailsPage> {
                   children: [
                     Expanded(
                       child: Text(
-                        _task.title,
+                        task.title,
                         style: const TextStyle(
                           color: Color(0xFF172033),
                           fontSize: 23,
@@ -103,7 +89,7 @@ class _TaskDetailsPageState extends State<TaskDetailsPage> {
                 ),
                 const SizedBox(height: 7),
                 Text(
-                  _task.description,
+                  task.description,
                   style: const TextStyle(
                     color: Color(0xFF374151),
                     fontSize: 15,
@@ -126,25 +112,25 @@ class _TaskDetailsPageState extends State<TaskDetailsPage> {
                 LabeledValueRow(
                   icon: Icons.flag_outlined,
                   label: 'Приоритет',
-                  value: taskPriorityLabel(_task.priority),
+                  value: taskPriorityLabel(task.priority),
                 ),
                 const Divider(height: 28),
                 LabeledValueRow(
                   icon: Icons.calendar_month_outlined,
                   label: 'Срок',
-                  value: formatTaskDate(_task.dueDate),
+                  value: formatTaskDate(task.dueDate),
                 ),
                 const Divider(height: 28),
                 LabeledValueRow(
                   icon: Icons.warehouse_outlined,
                   label: 'Зона склада',
-                  value: _task.zone,
+                  value: task.zone,
                 ),
                 const Divider(height: 28),
                 LabeledValueRow(
                   icon: Icons.sync_rounded,
                   label: 'Статус',
-                  value: taskStatusLabel(_task.status),
+                  value: taskStatusLabel(task.status),
                 ),
               ],
             ),
@@ -153,7 +139,7 @@ class _TaskDetailsPageState extends State<TaskDetailsPage> {
           SizedBox(
             height: 54,
             child: FilledButton.icon(
-              onPressed: _changeStatus,
+              onPressed: () => _changeStatus(context),
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFF3157D5),
               ),
@@ -168,7 +154,7 @@ class _TaskDetailsPageState extends State<TaskDetailsPage> {
           SizedBox(
             height: 54,
             child: OutlinedButton.icon(
-              onPressed: _editTask,
+              onPressed: () => _editTask(context),
               icon: const Icon(Icons.edit_outlined),
               label: const Text(
                 'Редактировать задачу',
@@ -181,45 +167,15 @@ class _TaskDetailsPageState extends State<TaskDetailsPage> {
     );
   }
 
-  Future<void> _editTask() async {
-    final result = await Navigator.push<WarehouseTask>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => TaskFormPage(taskId: _task.id, task: _task),
-      ),
-    );
-    if (result != null) {
-      setState(() => _task = result);
-      widget.onTaskChanged(_task);
-      _showSuccess('Изменения сохранены');
-    }
+  void _editTask(BuildContext context) {
+    context.push('${GoRouterState.of(context).uri.path}/edit');
   }
 
-  Future<void> _changeStatus() async {
-    final result = await Navigator.push<TaskStatus>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => TaskStatusPage(currentStatus: _task.status),
-      ),
-    );
-    if (result != null) {
-      setState(() => _task = _task.copyWith(status: result));
-      widget.onTaskChanged(_task);
-      _showSuccess('Статус задачи изменён');
-    }
+  void _changeStatus(BuildContext context) {
+    context.push('${GoRouterState.of(context).uri.path}/status');
   }
 
-  void _toggleFavorite() {
-    setState(() => _task = TaskLogic.toggleFavorite(_task));
-    widget.onTaskChanged(_task);
-    _showSuccess(
-      _task.isFavorite
-          ? 'Задача добавлена в избранное'
-          : 'Задача удалена из избранного',
-    );
-  }
-
-  void _showSuccess(String message) {
+  void _showSuccess(BuildContext context, String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(

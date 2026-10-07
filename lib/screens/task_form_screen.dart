@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../data/mock_tasks.dart';
 import '../models/warehouse_task.dart';
 import '../utils/task_formatters.dart';
 
 class TaskFormPage extends StatefulWidget {
-  const TaskFormPage({super.key, required this.taskId, this.task});
+  const TaskFormPage({super.key, this.taskId});
 
-  final int taskId;
-  final WarehouseTask? task;
+  final int? taskId;
 
   @override
   State<TaskFormPage> createState() => _TaskFormPageState();
@@ -20,14 +21,14 @@ class _TaskFormPageState extends State<TaskFormPage> {
   late final TextEditingController _zoneController;
   late TaskPriority _priority;
   late TaskStatus _status;
-  late DateTime _dueDate;
+  DateTime? _dueDate;
 
-  bool get _isEditing => widget.task != null;
+  bool get _isEditing => widget.taskId != null;
 
   @override
   void initState() {
     super.initState();
-    final task = widget.task;
+    final task = widget.taskId == null ? null : findMockTask(widget.taskId!);
     _titleController = TextEditingController(text: task?.title ?? '');
     _descriptionController = TextEditingController(
       text: task?.description ?? '',
@@ -35,7 +36,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
     _zoneController = TextEditingController(text: task?.zone ?? '');
     _priority = task?.priority ?? TaskPriority.medium;
     _status = task?.status ?? TaskStatus.newTask;
-    _dueDate = task?.dueDate ?? DateTime(2026, 9, 17);
+    _dueDate = task?.dueDate;
   }
 
   @override
@@ -48,12 +49,19 @@ class _TaskFormPageState extends State<TaskFormPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isEditing && findMockTask(widget.taskId!) == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Задача не найдена')),
+        body: Center(child: Text('Задача №${widget.taskId} отсутствует')),
+      );
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text(_isEditing ? 'Редактирование задачи' : 'Новая задача'),
       ),
       body: Form(
         key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
@@ -65,7 +73,8 @@ class _TaskFormPageState extends State<TaskFormPage> {
               decoration: const InputDecoration(
                 hintText: 'Например: принять поставку',
               ),
-              validator: _requiredValidator,
+              validator: (value) =>
+                  _requiredValidator(value, 'Введите название'),
             ),
             const SizedBox(height: 18),
             const _FieldTitle('Описание'),
@@ -78,7 +87,8 @@ class _TaskFormPageState extends State<TaskFormPage> {
                 hintText: 'Опишите, что необходимо выполнить',
                 alignLabelWithHint: true,
               ),
-              validator: _requiredValidator,
+              validator: (value) =>
+                  _requiredValidator(value, 'Введите описание'),
             ),
             const SizedBox(height: 18),
             const _FieldTitle('Зона склада'),
@@ -87,7 +97,8 @@ class _TaskFormPageState extends State<TaskFormPage> {
               controller: _zoneController,
               textInputAction: TextInputAction.next,
               decoration: const InputDecoration(hintText: 'Например: A-03'),
-              validator: _requiredValidator,
+              validator: (value) =>
+                  _requiredValidator(value, 'Выберите зону склада'),
             ),
             const SizedBox(height: 18),
             const _FieldTitle('Приоритет'),
@@ -111,6 +122,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
               onChanged: (value) {
                 if (value != null) setState(() => _priority = value);
               },
+              validator: (value) => value == null ? 'Выберите приоритет' : null,
             ),
             const SizedBox(height: 18),
             const _FieldTitle('Статус'),
@@ -138,36 +150,63 @@ class _TaskFormPageState extends State<TaskFormPage> {
               onChanged: (value) {
                 if (value != null) setState(() => _status = value);
               },
+              validator: (value) => value == null ? 'Выберите статус' : null,
             ),
             const SizedBox(height: 18),
             const _FieldTitle('Срок выполнения'),
             const SizedBox(height: 8),
-            Material(
-              color: const Color(0xFFF7F8FC),
-              borderRadius: BorderRadius.circular(14),
-              child: InkWell(
-                onTap: _pickDate,
-                borderRadius: BorderRadius.circular(14),
-                child: Container(
-                  height: 56,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: const Color(0xFFE0E5EF)),
+            FormField<DateTime>(
+              initialValue: _dueDate,
+              validator: (value) =>
+                  value == null ? 'Выберите срок выполнения' : null,
+              builder: (field) => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Material(
+                    color: const Color(0xFFF7F8FC),
                     borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.calendar_month_outlined,
-                        color: Color(0xFF697386),
+                    child: InkWell(
+                      onTap: () => _pickDate(field),
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        height: 56,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: field.hasError
+                                ? Theme.of(context).colorScheme.error
+                                : const Color(0xFFE0E5EF),
+                          ),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.calendar_month_outlined),
+                            const SizedBox(width: 12),
+                            Text(
+                              field.value == null
+                                  ? 'Выберите дату'
+                                  : formatTaskDate(field.value!),
+                            ),
+                            const Spacer(),
+                            const Icon(Icons.chevron_right_rounded),
+                          ],
+                        ),
                       ),
-                      const SizedBox(width: 12),
-                      Text(formatTaskDate(_dueDate)),
-                      const Spacer(),
-                      const Icon(Icons.chevron_right_rounded),
-                    ],
+                    ),
                   ),
-                ),
+                  if (field.hasError)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 6, 0, 0),
+                      child: Text(
+                        field.errorText!,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(height: 30),
@@ -190,36 +229,36 @@ class _TaskFormPageState extends State<TaskFormPage> {
     );
   }
 
-  Future<void> _pickDate() async {
+  Future<void> _pickDate(FormFieldState<DateTime> field) async {
     final date = await showDatePicker(
       context: context,
-      initialDate: _dueDate,
-      firstDate: DateTime(2025),
-      lastDate: DateTime(2030),
+      initialDate: field.value ?? DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2035),
     );
-    if (date != null) setState(() => _dueDate = date);
+    if (date != null && mounted) {
+      field.didChange(date);
+      setState(() => _dueDate = date);
+    }
   }
 
   void _save() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    Navigator.pop(
-      context,
-      WarehouseTask(
-        id: widget.taskId,
-        title: _titleController.text.trim(),
-        description: _descriptionController.text.trim(),
-        priority: _priority,
-        status: _status,
-        dueDate: _dueDate,
-        zone: _zoneController.text.trim(),
-        isFavorite: widget.task?.isFavorite ?? false,
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          _isEditing
+              ? 'Изменения проверены: ${_titleController.text.trim()} (демо)'
+              : 'Задача проверена: ${_titleController.text.trim()} (демо)',
+        ),
       ),
     );
+    context.pop();
   }
 
-  static String? _requiredValidator(String? value) {
-    if (value == null || value.trim().isEmpty) return 'Заполните поле';
+  static String? _requiredValidator(String? value, String message) {
+    if (value == null || value.trim().isEmpty) return message;
     return null;
   }
 }
