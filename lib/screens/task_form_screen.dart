@@ -81,6 +81,8 @@ class _TaskFormPageState extends State<TaskFormPage> {
             const SizedBox(height: 8),
             TextFormField(
               controller: _descriptionController,
+              keyboardType: TextInputType.multiline,
+              textInputAction: TextInputAction.newline,
               minLines: 4,
               maxLines: 6,
               decoration: const InputDecoration(
@@ -95,7 +97,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
             const SizedBox(height: 8),
             TextFormField(
               controller: _zoneController,
-              textInputAction: TextInputAction.next,
+              textInputAction: TextInputAction.done,
               decoration: const InputDecoration(hintText: 'Например: A-03'),
               validator: (value) =>
                   _requiredValidator(value, 'Выберите зону склада'),

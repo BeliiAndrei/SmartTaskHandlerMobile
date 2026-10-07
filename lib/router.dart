@@ -68,17 +68,29 @@ final router = GoRouter(
 GoRoute _taskDetailsRoute(String path) => GoRoute(
   path: path,
   builder: (context, state) =>
-      TaskDetailsPage(id: int.parse(state.pathParameters['id']!)),
+      _taskPage(state, (id) => TaskDetailsPage(id: id)),
   routes: [
     GoRoute(
       path: 'edit',
       builder: (context, state) =>
-          TaskFormPage(taskId: int.parse(state.pathParameters['id']!)),
+          _taskPage(state, (id) => TaskFormPage(taskId: id)),
     ),
     GoRoute(
       path: 'status',
       builder: (context, state) =>
-          TaskStatusPage(id: int.parse(state.pathParameters['id']!)),
+          _taskPage(state, (id) => TaskStatusPage(id: id)),
     ),
   ],
 );
+
+Widget _taskPage(GoRouterState state, Widget Function(int id) buildPage) {
+  final rawId = state.pathParameters['id'];
+  final id = int.tryParse(rawId ?? '');
+  if (id == null) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Задача не найдена')),
+      body: Center(child: Text('Неверный номер задачи: $rawId')),
+    );
+  }
+  return buildPage(id);
+}

@@ -56,7 +56,12 @@ void main() {
     await tester.tap(find.text('Изменить статус'));
     await tester.pumpAndSettle();
     expect(find.text('Изменение статуса'), findsOneWidget);
-    await tester.pageBack();
+    await tester.tap(find.text('Выполнена'));
+    await tester.tap(find.text('Сохранить статус'));
+    await tester.pumpAndSettle();
+    expect(find.text('Задача №1042'), findsOneWidget);
+    expect(find.text('Новый статус подтверждён (демо)'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 5));
     await tester.pumpAndSettle();
     await tester.pageBack();
     await tester.pumpAndSettle();
@@ -128,6 +133,10 @@ void main() {
     expect(find.text('Складские задачи'), findsOneWidget);
     expect(mockTasks.length, countBefore);
     expect(find.text('Переместить груз'), findsNothing);
+    expect(
+      find.text('Задача проверена: Переместить груз (демо)'),
+      findsOneWidget,
+    );
 
     final search = find.byWidgetPredicate(
       (widget) =>
@@ -158,5 +167,41 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Вход в систему'), findsOneWidget);
     expect(find.byType(NavigationBar), findsNothing);
+
+    await tester.tap(find.text('Регистрация'));
+    await tester.pumpAndSettle();
+    expect(find.text('Регистрация сотрудника'), findsOneWidget);
+    await tester.enterText(find.byType(TextFormField).at(0), 'worker@invalid');
+    await tester.enterText(find.byType(TextFormField).at(1), 'secret1');
+    await tester.enterText(find.byType(TextFormField).at(2), 'different');
+    await tester.ensureVisible(find.text('Зарегистрироваться'));
+    await tester.tap(find.text('Зарегистрироваться'));
+    await tester.pumpAndSettle();
+    expect(find.text('Введите корректный e-mail'), findsOneWidget);
+    expect(find.text('Пароли не совпадают'), findsOneWidget);
+
+    await tester.enterText(
+      find.byType(TextFormField).at(0),
+      'worker@example.com',
+    );
+    await tester.enterText(find.byType(TextFormField).at(2), 'secret1');
+    await tester.ensureVisible(find.text('Зарегистрироваться'));
+    await tester.tap(find.text('Зарегистрироваться'));
+    await tester.pumpAndSettle();
+    expect(find.text('Складские задачи'), findsOneWidget);
+    expect(router.canPop(), isFalse);
+
+    router.go('/tasks/not-a-number');
+    await tester.pumpAndSettle();
+    expect(find.text('Неверный номер задачи: not-a-number'), findsOneWidget);
+    router.go('/tasks/999999');
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Задача №999999 отсутствует в mock-данных'),
+      findsOneWidget,
+    );
+    router.go('/history/1041');
+    await tester.pumpAndSettle();
+    expect(find.text('Задача №1041'), findsOneWidget);
   });
 }
