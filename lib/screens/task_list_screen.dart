@@ -201,12 +201,14 @@ class _TaskListPageState extends State<TaskListPage> {
         SnackBar(
           content: Row(
             children: [
-              const Icon(Icons.check_circle_rounded, color: Colors.white),
-              const SizedBox(width: 10),
-              Text(message),
+              const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+              const SizedBox(width: 6),
+              Text(message, style: const TextStyle(fontSize: 12)),
             ],
           ),
           behavior: SnackBarBehavior.floating,
+          width: 300,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           backgroundColor: const Color(0xFF15803D),
         ),
       );

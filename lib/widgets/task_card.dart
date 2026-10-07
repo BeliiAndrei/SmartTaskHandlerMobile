@@ -15,7 +15,7 @@ class TaskCard extends StatelessWidget {
     this.showStatus = true,
     this.showPriority = true,
     this.showDueDate = true,
-    this.showChevron = true,
+    this.showChevron = true
   });
 
   final WarehouseTask task;

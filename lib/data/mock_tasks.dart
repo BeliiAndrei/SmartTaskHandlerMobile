@@ -17,7 +17,7 @@ List<WarehouseTask> createMockTasks() {
       description: 'Подготовить товары и передать заказ в зону отгрузки.',
       priority: TaskPriority.high,
       status: TaskStatus.inProgress,
-      dueDate: DateTime(2026, 9, 16),
+      dueDate: DateTime(2026, 10, 16),
       zone: 'A-03',
     ),
     WarehouseTask(
@@ -26,7 +26,7 @@ List<WarehouseTask> createMockTasks() {
       description: 'Проверить количество коробок и состояние упаковки.',
       priority: TaskPriority.high,
       status: TaskStatus.newTask,
-      dueDate: DateTime(2026, 9, 16),
+      dueDate: DateTime(2026, 10, 16),
       zone: 'Приёмка',
     ),
     WarehouseTask(
@@ -53,7 +53,7 @@ List<WarehouseTask> createMockTasks() {
       description: 'Заменить повреждённые этикетки на местах хранения.',
       priority: TaskPriority.low,
       status: TaskStatus.newTask,
-      dueDate: DateTime(2026, 9, 20),
+      dueDate: DateTime(2026, 10, 20),
       zone: 'D-01',
     ),
     WarehouseTask(
