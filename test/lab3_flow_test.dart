@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smart_task_handler_mobile/data/mock_tasks.dart';
 import 'package:smart_task_handler_mobile/main.dart';
+import 'package:smart_task_handler_mobile/router.dart';
 import 'package:smart_task_handler_mobile/screens/task_form_screen.dart';
 
 void main() {
@@ -33,11 +34,30 @@ void main() {
     expect(find.byType(NavigationBar), findsOneWidget);
     expect(find.text('Складские задачи'), findsOneWidget);
     expect(find.text('Вход в систему'), findsNothing);
+    expect(router.canPop(), isFalse);
 
     await tester.tap(find.text('Собрать заказ №1042'));
     await tester.pumpAndSettle();
     expect(find.text('Задача №1042'), findsOneWidget);
     expect(find.byType(NavigationBar), findsOneWidget);
+    await tester.ensureVisible(find.text('Редактировать задачу'));
+    await tester.tap(find.text('Редактировать задачу'));
+    await tester.pumpAndSettle();
+    expect(find.text('Редактирование задачи'), findsOneWidget);
+    expect(
+      tester
+          .widget<TextFormField>(find.byType(TextFormField).first)
+          .controller!
+          .text,
+      'Собрать заказ №1042',
+    );
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Изменить статус'));
+    await tester.pumpAndSettle();
+    expect(find.text('Изменение статуса'), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
     await tester.pageBack();
     await tester.pumpAndSettle();
     expect(find.text('Складские задачи'), findsOneWidget);
