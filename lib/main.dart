@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'screens/auth_screen.dart';
+import 'router.dart';
 
 void main() {
   runApp(const SmartTaskHandlerApp());
@@ -13,7 +13,7 @@ class SmartTaskHandlerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     const primary = Color(0xFF3157D5);
 
-    return MaterialApp(
+    return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'SmartTaskHandler',
       theme: ThemeData(
@@ -41,7 +41,7 @@ class SmartTaskHandlerApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const AuthPage(),
+      routerConfig: router,
     );
   }
 }
