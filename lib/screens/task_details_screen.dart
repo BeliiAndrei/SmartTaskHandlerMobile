@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 
 import '../data/mock_tasks.dart';
 import '../utils/task_formatters.dart';
+import '../widgets/favorite_actions.dart';
+import '../widgets/favorites_scope.dart';
 import '../widgets/favorite_button.dart';
 import '../widgets/labeled_value_row.dart';
 
@@ -20,16 +22,14 @@ class TaskDetailsPage extends StatelessWidget {
         body: Center(child: Text('Задача №$id отсутствует в mock-данных')),
       );
     }
+    final favorites = FavoritesScope.of(context);
     return Scaffold(
       appBar: AppBar(
         title: Text('Задача №${task.id}'),
         actions: [
           FavoriteButton(
-            isFavorite: task.isFavorite,
-            onPressed: () => _showSuccess(
-              context,
-              'Избранное: действие подтверждено (демо)',
-            ),
+            isFavorite: favorites.contains(task.id),
+            onPressed: () => toggleFavoriteWithFeedback(context, task.id),
           ),
           IconButton(
             onPressed: () => _editTask(context),
@@ -173,25 +173,5 @@ class TaskDetailsPage extends StatelessWidget {
 
   void _changeStatus(BuildContext context) {
     context.push('${GoRouterState.of(context).uri.path}/status');
-  }
-
-  void _showSuccess(BuildContext context, String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
-              const SizedBox(width: 6),
-              Text(message, style: const TextStyle(fontSize: 12)),
-            ],
-          ),
-          behavior: SnackBarBehavior.floating,
-          width: 300,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          backgroundColor: const Color(0xFF15803D),
-        ),
-      );
   }
 }

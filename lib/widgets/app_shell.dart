@@ -20,6 +20,11 @@ class AppShell extends StatelessWidget {
             label: 'Задачи',
           ),
           NavigationDestination(
+            icon: Icon(Icons.star_border_rounded),
+            selectedIcon: Icon(Icons.star_rounded),
+            label: 'Избранное',
+          ),
+          NavigationDestination(
             icon: Icon(Icons.history_rounded),
             label: 'История',
           ),

@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../data/mock_tasks.dart';
 import '../models/warehouse_task.dart';
 import '../services/task_logic.dart';
+import '../widgets/favorite_actions.dart';
+import '../widgets/favorites_scope.dart';
 import '../widgets/task_card.dart';
 
 class TaskHistoryPage extends StatelessWidget {
@@ -23,6 +25,7 @@ class TaskHistoryPage extends StatelessWidget {
     BuildContext context,
     List<WarehouseTask> completedTasks,
   ) {
+    final favorites = FavoritesScope.of(context);
     if (completedTasks.isEmpty) {
       return const Center(
         child: Padding(
@@ -99,7 +102,10 @@ class TaskHistoryPage extends StatelessWidget {
         for (final task in completedTasks) ...[
           TaskCard(
             task: task,
+            isFavorite: favorites.contains(task.id),
             onTap: () => context.push('/history/${task.id}'),
+            onFavoriteToggle: () =>
+                toggleFavoriteWithFeedback(context, task.id),
             showPriority: false,
             showDueDate: false,
             showChevron: false,

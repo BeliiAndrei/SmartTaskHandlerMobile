@@ -9,16 +9,18 @@ class TaskCard extends StatelessWidget {
   const TaskCard({
     super.key,
     required this.task,
+    required this.isFavorite,
     this.onTap,
     this.onFavoriteToggle,
     this.showZone = true,
     this.showStatus = true,
     this.showPriority = true,
     this.showDueDate = true,
-    this.showChevron = true
+    this.showChevron = true,
   });
 
   final WarehouseTask task;
+  final bool isFavorite;
   final VoidCallback? onTap;
   final VoidCallback? onFavoriteToggle;
   final bool showZone;
@@ -93,7 +95,7 @@ class TaskCard extends StatelessWidget {
                   ),
                   if (onFavoriteToggle != null)
                     FavoriteButton(
-                      isFavorite: task.isFavorite,
+                      isFavorite: isFavorite,
                       onPressed: onFavoriteToggle!,
                       compact: true,
                     ),

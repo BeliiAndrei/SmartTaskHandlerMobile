@@ -104,14 +104,14 @@ POST            /auth/login
 ## Лабораторная №3: маршруты и локальные формы
 
 Приложение стартует на `/login` через `MaterialApp.router`. Карта маршрутов
-находится в `lib/router.dart`; разделы `/tasks`, `/history`, `/profile` образуют
-три ветви `StatefulShellRoute.indexedStack` с постоянным `NavigationBar`.
+находится в `lib/router.dart`; разделы `/tasks`, `/favorites`, `/history`, `/profile` образуют
+четыре ветви `StatefulShellRoute.indexedStack` с постоянным `NavigationBar`.
 `/login` и `/register` расположены вне shell. Вложенные адреса:
 
 - `/tasks/new` — форма создания;
-- `/tasks/:id` и `/history/:id` — детали, которые ищут задачу по `id` в mock;
-- `/tasks/:id/edit`, `/history/:id/edit` — форма редактирования;
-- `/tasks/:id/status`, `/history/:id/status` — выбор статуса.
+- `/tasks/:id`, `/favorites/:id` и `/history/:id` — детали, которые ищут задачу по `id` в mock;
+- `/tasks/:id/edit`, `/favorites/:id/edit`, `/history/:id/edit` — форма редактирования;
+- `/tasks/:id/status`, `/favorites/:id/status`, `/history/:id/status` — выбор статуса.
 
 Для открытия деталей и форм используется `context.push`, для завершения формы —
 `context.pop`, после входа и подтверждённого выхода — `context.go`. Форма
@@ -121,8 +121,31 @@ POST            /auth/login
 подтверждение через `AlertDialog`.
 
 В L3 задачи остаются mock: успешное заполнение формы и выбор статуса не меняют
-список. Общее изменяемое состояние и Repository предусмотрены в L4.
+список. Избранное сохраняется локально; остальные изменения задач предусмотрены в L4.
 
 Проверка: `flutter analyze`, `flutter test`, `flutter run`. Виджетный тест
 `test/lab3_flow_test.dart` проходит вход, адресную навигацию, валидацию,
 переключение вкладок с сохранением поиска и подтверждение выхода.
+
+## Локальное избранное
+
+Звёздочка в списке, истории и деталях добавляет задачу в избранное или удаляет
+её. Вкладка `/favorites` показывает задачи, чьи ID есть в хранилище. После
+перезапуска приложения выбор сохраняется.
+
+`FavoriteRepository` записывает JSON `favorite_task_ids.json` в служебную папку
+приложения (`getApplicationSupportDirectory` из `path_provider`). Формат:
+
+```json
+{
+  "taskIds": [1042, 1043]
+}
+```
+
+Сохраняются только ID; названия и остальные поля по-прежнему читаются из
+`mockTasks`. Файл создаётся при первом изменении избранного. При ошибке чтения
+приложение не перезаписывает повреждённый JSON; вкладка предлагает повторить
+загрузку.
+
+Проверка: `flutter test test/favorites_test.dart` покрывает сохранение и повторную
+загрузку JSON, неверный файл и интерфейсный поток добавления и удаления.

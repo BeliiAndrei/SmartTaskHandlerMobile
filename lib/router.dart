@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'screens/auth_screen.dart';
+import 'screens/favorites_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/task_details_screen.dart';
 import 'screens/task_form_screen.dart';
@@ -36,6 +37,15 @@ final router = GoRouter(
                 ),
                 _taskDetailsRoute(':id'),
               ],
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/favorites',
+              builder: (context, state) => const FavoritesPage(),
+              routes: [_taskDetailsRoute(':id')],
             ),
           ],
         ),

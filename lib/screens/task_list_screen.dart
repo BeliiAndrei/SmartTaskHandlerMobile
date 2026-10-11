@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../data/mock_tasks.dart';
 import '../models/warehouse_task.dart';
 import '../services/task_logic.dart';
+import '../widgets/favorite_actions.dart';
+import '../widgets/favorites_scope.dart';
 import '../widgets/task_card.dart';
 
 class TaskListPage extends StatefulWidget {
@@ -92,6 +94,7 @@ class _TaskListPageState extends State<TaskListPage> {
 
   Widget _buildTaskList() {
     final visibleTasks = _visibleTasks;
+    final favorites = FavoritesScope.of(context);
 
     return Column(
       children: [
@@ -182,36 +185,16 @@ class _TaskListPageState extends State<TaskListPage> {
                     final task = visibleTasks[index];
                     return TaskCard(
                       task: task,
+                      isFavorite: favorites.contains(task.id),
                       onTap: () => context.push('/tasks/${task.id}'),
-                      onFavoriteToggle: () => _showSuccess(
-                        'Избранное: действие подтверждено (демо)',
-                      ),
+                      onFavoriteToggle: () =>
+                          toggleFavoriteWithFeedback(context, task.id),
                     );
                   },
                 ),
         ),
       ],
     );
-  }
-
-  void _showSuccess(String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
-              const SizedBox(width: 6),
-              Text(message, style: const TextStyle(fontSize: 12)),
-            ],
-          ),
-          behavior: SnackBarBehavior.floating,
-          width: 300,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          backgroundColor: const Color(0xFF15803D),
-        ),
-      );
   }
 }
 
