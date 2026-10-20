@@ -254,8 +254,8 @@ class _TaskFormPageState extends State<TaskFormPage> {
       SnackBar(
         content: Text(
           _isEditing
-              ? 'Изменения проверены: ${_titleController.text.trim()} (демо)'
-              : 'Задача проверена: ${_titleController.text.trim()} (демо)',
+              ? 'Изменения проверены. Сохранение пока недоступно.'
+              : 'Данные проверены. Создание задачи пока недоступно.',
         ),
       ),
     );

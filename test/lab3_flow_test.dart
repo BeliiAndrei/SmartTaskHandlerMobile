@@ -134,7 +134,7 @@ void main() {
     expect(mockTasks.length, countBefore);
     expect(find.text('Переместить груз'), findsNothing);
     expect(
-      find.text('Задача проверена: Переместить груз (демо)'),
+      find.text('Данные проверены. Создание задачи пока недоступно.'),
       findsOneWidget,
     );
 

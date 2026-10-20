@@ -65,10 +65,13 @@ class _TaskListPageState extends State<TaskListPage> {
         ),
         actions: [
           Center(
-            child: Consumer<TaskModel>(
-              builder: (context, model, child) =>
-                  Badge(label: Text('${model.activeCount}'), child: child!),
-              child: const Icon(Icons.assignment_outlined),
+            child: Tooltip(
+              message: 'Активные задачи',
+              child: Consumer<TaskModel>(
+                builder: (context, model, child) =>
+                    Badge(label: Text('${model.activeCount}'), child: child!),
+                child: const Icon(Icons.assignment_outlined),
+              ),
             ),
           ),
           Padding(

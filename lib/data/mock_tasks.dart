@@ -9,7 +9,12 @@ WarehouseTask? findMockTask(int id) {
   return null;
 }
 
-List<WarehouseTask> createMockTasks() {
+List<WarehouseTask> createMockTasks({DateTime? now}) {
+  final currentDate = now ?? DateTime.now();
+  final today = DateTime(currentDate.year, currentDate.month, currentDate.day);
+  DateTime dayOffset(int days) =>
+      DateTime(today.year, today.month, today.day + days);
+
   return [
     WarehouseTask(
       id: 1042,
@@ -17,7 +22,7 @@ List<WarehouseTask> createMockTasks() {
       description: 'Подготовить товары и передать заказ в зону отгрузки.',
       priority: TaskPriority.high,
       status: TaskStatus.inProgress,
-      dueDate: DateTime(2026, 10, 16),
+      dueDate: dayOffset(2),
       zone: 'A-03',
     ),
     WarehouseTask(
@@ -26,7 +31,7 @@ List<WarehouseTask> createMockTasks() {
       description: 'Проверить количество коробок и состояние упаковки.',
       priority: TaskPriority.high,
       status: TaskStatus.newTask,
-      dueDate: DateTime(2026, 10, 16),
+      dueDate: dayOffset(1),
       zone: 'Приёмка',
     ),
     WarehouseTask(
@@ -35,7 +40,7 @@ List<WarehouseTask> createMockTasks() {
       description: 'Сверить фактические остатки с учётной системой.',
       priority: TaskPriority.medium,
       status: TaskStatus.paused,
-      dueDate: DateTime.now().subtract(const Duration(days: 2)),
+      dueDate: dayOffset(-2),
       zone: 'B-12',
     ),
     WarehouseTask(
@@ -44,7 +49,7 @@ List<WarehouseTask> createMockTasks() {
       description: 'Освободить проход и разместить груз по маркировке.',
       priority: TaskPriority.medium,
       status: TaskStatus.inProgress,
-      dueDate: DateTime(2026, 9, 18),
+      dueDate: dayOffset(4),
       zone: 'C-05',
     ),
     WarehouseTask(
@@ -53,7 +58,7 @@ List<WarehouseTask> createMockTasks() {
       description: 'Заменить повреждённые этикетки на местах хранения.',
       priority: TaskPriority.low,
       status: TaskStatus.newTask,
-      dueDate: DateTime(2026, 10, 20),
+      dueDate: dayOffset(7),
       zone: 'D-01',
     ),
     WarehouseTask(
@@ -62,7 +67,7 @@ List<WarehouseTask> createMockTasks() {
       description: 'Подсчитать возвращённые товары и составить ведомость.',
       priority: TaskPriority.low,
       status: TaskStatus.completed,
-      dueDate: DateTime(2026, 9, 15),
+      dueDate: dayOffset(-5),
       zone: 'Возвраты',
     ),
   ];

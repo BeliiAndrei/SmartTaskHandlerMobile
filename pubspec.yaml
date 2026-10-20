@@ -20,5 +20,10 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^6.0.0
 
+# path_provider_android 2.3.x requires libdartjni.so, which is missing from
+# the current Android build. Keep the pre-JNI implementation for this lab.
+dependency_overrides:
+  path_provider_android: 2.2.23
+
 flutter:
   uses-material-design: true

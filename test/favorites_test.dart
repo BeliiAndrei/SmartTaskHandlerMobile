@@ -2,7 +2,10 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
 import 'package:smart_task_handler_mobile/main.dart';
+import 'package:smart_task_handler_mobile/models/task_model.dart';
+import 'package:smart_task_handler_mobile/models/warehouse_task.dart';
 import 'package:smart_task_handler_mobile/router.dart';
 import 'package:smart_task_handler_mobile/services/favorite_repository.dart';
 import 'package:smart_task_handler_mobile/services/favorite_store.dart';
@@ -100,6 +103,13 @@ void main() {
     await tester.tap(find.text('Избранное'));
     await tester.pumpAndSettle();
     expect(find.text('Собрать заказ №1042'), findsOneWidget);
+    final taskModel = Provider.of<TaskModel>(
+      tester.element(find.byType(TaskCard).first),
+      listen: false,
+    );
+    taskModel.updateStatus(1042, TaskStatus.completed);
+    await tester.pumpAndSettle();
+    expect(find.text('Выполнена'), findsOneWidget);
     await tester.tap(find.text('Собрать заказ №1042'));
     await tester.pumpAndSettle();
     expect(find.text('Задача №1042'), findsOneWidget);

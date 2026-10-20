@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
-import '../data/mock_tasks.dart';
+import '../models/task_model.dart';
 import '../widgets/favorite_actions.dart';
 import '../widgets/favorites_scope.dart';
 import '../widgets/task_card.dart';
@@ -12,7 +13,9 @@ class FavoritesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final favorites = FavoritesScope.of(context);
-    final tasks = mockTasks
+    final tasks = context
+        .watch<TaskModel>()
+        .tasks
         .where((task) => favorites.contains(task.id))
         .toList();
 
