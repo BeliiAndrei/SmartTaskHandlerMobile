@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
-import '../data/mock_tasks.dart';
+import '../models/task_model.dart';
 import '../models/warehouse_task.dart';
 import '../services/task_logic.dart';
 import '../widgets/favorite_actions.dart';
@@ -25,9 +26,9 @@ class _TaskListPageState extends State<TaskListPage> {
     super.dispose();
   }
 
-  List<WarehouseTask> get _visibleTasks {
+  List<WarehouseTask> _visibleTasks(List<WarehouseTask> tasks) {
     return TaskLogic.filterTasks(
-      mockTasks,
+      tasks,
       query: _searchController.text,
       status: _selectedStatus,
     );
@@ -63,6 +64,13 @@ class _TaskListPageState extends State<TaskListPage> {
           ],
         ),
         actions: [
+          Center(
+            child: Consumer<TaskModel>(
+              builder: (context, model, child) =>
+                  Badge(label: Text('${model.activeCount}'), child: child!),
+              child: const Icon(Icons.assignment_outlined),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 18),
             child: CircleAvatar(
@@ -93,7 +101,8 @@ class _TaskListPageState extends State<TaskListPage> {
   }
 
   Widget _buildTaskList() {
-    final visibleTasks = _visibleTasks;
+    final model = context.watch<TaskModel>();
+    final visibleTasks = _visibleTasks(model.tasks);
     final favorites = FavoritesScope.of(context);
 
     return Column(

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import 'data/mock_tasks.dart';
+import 'models/task_model.dart';
 import 'router.dart';
 import 'services/favorite_repository.dart';
 import 'services/favorite_store.dart';
@@ -40,39 +43,42 @@ class SmartTaskHandlerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     const primary = Color(0xFF3157D5);
 
-    return UnsellableScope(
-      store: unsellableStore ?? defaultUnsellableStore,
-      child: FavoritesScope(
-        store: favoriteStore ?? defaultFavoriteStore,
-        child: MaterialApp.router(
-          debugShowCheckedModeBanner: false,
-          title: 'SmartTaskHandler',
-          theme: ThemeData(
-            useMaterial3: true,
-            colorScheme: ColorScheme.fromSeed(seedColor: primary),
-            scaffoldBackgroundColor: const Color(0xFFF3F6FB),
-            inputDecorationTheme: InputDecorationTheme(
-              filled: true,
-              fillColor: const Color(0xFFF7F8FC),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 18,
-                vertical: 17,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide.none,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: Color(0xFFE0E5EF)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: primary, width: 1.5),
+    return ChangeNotifierProvider(
+      create: (_) => TaskModel(createMockTasks()),
+      child: UnsellableScope(
+        store: unsellableStore ?? defaultUnsellableStore,
+        child: FavoritesScope(
+          store: favoriteStore ?? defaultFavoriteStore,
+          child: MaterialApp.router(
+            debugShowCheckedModeBanner: false,
+            title: 'SmartTaskHandler',
+            theme: ThemeData(
+              useMaterial3: true,
+              colorScheme: ColorScheme.fromSeed(seedColor: primary),
+              scaffoldBackgroundColor: const Color(0xFFF3F6FB),
+              inputDecorationTheme: InputDecorationTheme(
+                filled: true,
+                fillColor: const Color(0xFFF7F8FC),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 17,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0xFFE0E5EF)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: primary, width: 1.5),
+                ),
               ),
             ),
+            routerConfig: router,
           ),
-          routerConfig: router,
         ),
       ),
     );

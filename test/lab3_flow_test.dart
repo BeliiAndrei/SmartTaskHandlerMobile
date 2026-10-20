@@ -60,7 +60,7 @@ void main() {
     await tester.tap(find.text('Сохранить статус'));
     await tester.pumpAndSettle();
     expect(find.text('Задача №1042'), findsOneWidget);
-    expect(find.text('Новый статус подтверждён (демо)'), findsOneWidget);
+    expect(find.text('Статус задачи обновлён'), findsOneWidget);
     await tester.pump(const Duration(seconds: 5));
     await tester.pumpAndSettle();
     await tester.pageBack();
@@ -197,7 +197,7 @@ void main() {
     router.go('/tasks/999999');
     await tester.pumpAndSettle();
     expect(
-      find.text('Задача №999999 отсутствует в mock-данных'),
+      find.text('Задача №999999 отсутствует'),
       findsOneWidget,
     );
     router.go('/history/1041');

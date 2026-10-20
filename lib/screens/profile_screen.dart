@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
-import '../data/mock_tasks.dart';
-import '../models/warehouse_task.dart';
+import '../models/task_model.dart';
 import '../widgets/labeled_value_row.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -10,10 +10,9 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final completed = mockTasks
-        .where((task) => task.status == TaskStatus.completed)
-        .length;
-    final active = mockTasks.length - completed;
+    final model = context.watch<TaskModel>();
+    final completed = model.completedCount;
+    final active = model.activeCount;
 
     return ListView(
       padding: const EdgeInsets.all(20),

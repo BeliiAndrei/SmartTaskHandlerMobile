@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
-import '../data/mock_tasks.dart';
+import '../models/task_model.dart';
 import '../models/warehouse_task.dart';
 
 class TaskStatusPage extends StatefulWidget {
@@ -19,12 +20,13 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
   @override
   void initState() {
     super.initState();
-    _selectedStatus = findMockTask(widget.id)?.status ?? TaskStatus.newTask;
+    _selectedStatus =
+        context.read<TaskModel>().byId(widget.id)?.status ?? TaskStatus.newTask;
   }
 
   @override
   Widget build(BuildContext context) {
-    if (findMockTask(widget.id) == null) {
+    if (context.watch<TaskModel>().byId(widget.id) == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Задача не найдена')),
         body: Center(child: Text('Задача №${widget.id} отсутствует')),
@@ -45,7 +47,7 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Выбор подтверждается локально. Сохранение в списке появится в L4.',
+            'Изменение статуса сразу появится в списке и истории.',
             style: TextStyle(color: Color(0xFF697386)),
           ),
           const SizedBox(height: 24),
@@ -111,9 +113,9 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
   }
 
   void _save() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Новый статус подтверждён (демо)')),
-    );
+    context.read<TaskModel>().updateStatus(widget.id, _selectedStatus);
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('Статус задачи обновлён')));
     context.pop();
   }
 }

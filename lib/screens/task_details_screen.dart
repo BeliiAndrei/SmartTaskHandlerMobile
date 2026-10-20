@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
-import '../data/mock_tasks.dart';
+import '../models/task_model.dart';
 import '../utils/task_formatters.dart';
 import '../widgets/favorite_actions.dart';
 import '../widgets/favorites_scope.dart';
@@ -15,11 +16,11 @@ class TaskDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final task = findMockTask(id);
+    final task = context.watch<TaskModel>().byId(id);
     if (task == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Задача не найдена')),
-        body: Center(child: Text('Задача №$id отсутствует в mock-данных')),
+        body: Center(child: Text('Задача №$id отсутствует')),
       );
     }
     final favorites = FavoritesScope.of(context);

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
-import '../data/mock_tasks.dart';
+import '../models/task_model.dart';
 import '../models/warehouse_task.dart';
 import '../utils/task_formatters.dart';
 
@@ -28,7 +29,9 @@ class _TaskFormPageState extends State<TaskFormPage> {
   @override
   void initState() {
     super.initState();
-    final task = widget.taskId == null ? null : findMockTask(widget.taskId!);
+    final task = widget.taskId == null
+        ? null
+        : context.read<TaskModel>().byId(widget.taskId!);
     _titleController = TextEditingController(text: task?.title ?? '');
     _descriptionController = TextEditingController(
       text: task?.description ?? '',
@@ -49,7 +52,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isEditing && findMockTask(widget.taskId!) == null) {
+    if (_isEditing && context.watch<TaskModel>().byId(widget.taskId!) == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Задача не найдена')),
         body: Center(child: Text('Задача №${widget.taskId} отсутствует')),
