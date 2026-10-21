@@ -8,6 +8,7 @@ import '../services/task_logic.dart';
 import '../widgets/favorite_actions.dart';
 import '../widgets/favorites_scope.dart';
 import '../widgets/task_card.dart';
+import '../widgets/task_data_view.dart';
 
 class TaskListPage extends StatefulWidget {
   const TaskListPage({super.key});
@@ -36,6 +37,7 @@ class _TaskListPageState extends State<TaskListPage> {
 
   @override
   Widget build(BuildContext context) {
+    final model = context.watch<TaskModel>();
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFFF3F6FB),
@@ -89,22 +91,23 @@ class _TaskListPageState extends State<TaskListPage> {
           ),
         ],
       ),
-      body: _buildTaskList(),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/tasks/new'),
-        backgroundColor: const Color(0xFF3157D5),
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text(
-          'Новая задача',
-          style: TextStyle(fontWeight: FontWeight.w700),
-        ),
-      ),
+      body: TaskDataView(builder: (context, model) => _buildTaskList(model)),
+      floatingActionButton: model.isLoading || model.error != null
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () => context.push('/tasks/new'),
+              backgroundColor: const Color(0xFF3157D5),
+              foregroundColor: Colors.white,
+              icon: const Icon(Icons.add_rounded),
+              label: const Text(
+                'Новая задача',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
     );
   }
 
-  Widget _buildTaskList() {
-    final model = context.watch<TaskModel>();
+  Widget _buildTaskList(TaskModel model) {
     final visibleTasks = _visibleTasks(model.tasks);
     final favorites = FavoritesScope.of(context);
 

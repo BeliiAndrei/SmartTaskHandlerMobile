@@ -1,26 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 
-import '../models/task_model.dart';
 import '../models/warehouse_task.dart';
 import '../services/task_logic.dart';
 import '../widgets/favorite_actions.dart';
 import '../widgets/favorites_scope.dart';
 import '../widgets/task_card.dart';
+import '../widgets/task_data_view.dart';
 
 class TaskHistoryPage extends StatelessWidget {
   const TaskHistoryPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final completedTasks = TaskLogic.completedTasks(
-      context.watch<TaskModel>().tasks,
-    );
-
     return Scaffold(
       appBar: AppBar(title: const Text('История задач')),
-      body: _historyBody(context, completedTasks),
+      body: TaskDataView(
+        builder: (context, model) =>
+            _historyBody(context, TaskLogic.completedTasks(model.tasks)),
+      ),
     );
   }
 

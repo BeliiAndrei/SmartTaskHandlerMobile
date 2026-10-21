@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../models/task_model.dart';
 import '../models/warehouse_task.dart';
 import '../utils/task_formatters.dart';
+import '../widgets/task_data_view.dart';
 
 class TaskFormPage extends StatefulWidget {
   const TaskFormPage({super.key, this.taskId});
@@ -23,23 +24,19 @@ class _TaskFormPageState extends State<TaskFormPage> {
   late TaskPriority _priority;
   late TaskStatus _status;
   DateTime? _dueDate;
+  bool _prefilled = false;
+  bool _saving = false;
 
   bool get _isEditing => widget.taskId != null;
 
   @override
   void initState() {
     super.initState();
-    final task = widget.taskId == null
-        ? null
-        : context.read<TaskModel>().byId(widget.taskId!);
-    _titleController = TextEditingController(text: task?.title ?? '');
-    _descriptionController = TextEditingController(
-      text: task?.description ?? '',
-    );
-    _zoneController = TextEditingController(text: task?.zone ?? '');
-    _priority = task?.priority ?? TaskPriority.medium;
-    _status = task?.status ?? TaskStatus.newTask;
-    _dueDate = task?.dueDate;
+    _titleController = TextEditingController();
+    _descriptionController = TextEditingController();
+    _zoneController = TextEditingController();
+    _priority = TaskPriority.medium;
+    _status = TaskStatus.newTask;
   }
 
   @override
@@ -52,11 +49,27 @@ class _TaskFormPageState extends State<TaskFormPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isEditing && context.watch<TaskModel>().byId(widget.taskId!) == null) {
+    return TaskDataView(
+      builder: (context, model) => _buildForm(context, model),
+    );
+  }
+
+  Widget _buildForm(BuildContext context, TaskModel model) {
+    final task = _isEditing ? model.byId(widget.taskId!) : null;
+    if (_isEditing && task == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Задача не найдена')),
         body: Center(child: Text('Задача №${widget.taskId} отсутствует')),
       );
+    }
+    if (task != null && !_prefilled) {
+      _titleController.text = task.title;
+      _descriptionController.text = task.description;
+      _zoneController.text = task.zone;
+      _priority = task.priority;
+      _status = task.status;
+      _dueDate = task.dueDate;
+      _prefilled = true;
     }
     return Scaffold(
       appBar: AppBar(
@@ -218,7 +231,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
             SizedBox(
               height: 54,
               child: FilledButton(
-                onPressed: _save,
+                onPressed: _saving ? null : _save,
                 style: FilledButton.styleFrom(
                   backgroundColor: const Color(0xFF3157D5),
                 ),
@@ -247,18 +260,32 @@ class _TaskFormPageState extends State<TaskFormPage> {
     }
   }
 
-  void _save() {
+  Future<void> _save() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          _isEditing
-              ? 'Изменения проверены. Сохранение пока недоступно.'
-              : 'Данные проверены. Создание задачи пока недоступно.',
-        ),
-      ),
+    final model = context.read<TaskModel>();
+    final previous = _isEditing ? model.byId(widget.taskId!) : null;
+    final draft = WarehouseTask(
+      id: previous?.id ?? 0,
+      title: _titleController.text.trim(),
+      description: _descriptionController.text.trim(),
+      priority: _priority,
+      status: _status,
+      dueDate: _dueDate!,
+      zone: _zoneController.text.trim(),
+      isFavorite: previous?.isFavorite ?? false,
     );
+
+    setState(() => _saving = true);
+    final error = _isEditing
+        ? await model.update(draft)
+        : await model.add(draft);
+    if (!mounted) return;
+    setState(() => _saving = false);
+    if (error != null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error)));
+      return;
+    }
     context.pop();
   }
 

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:smart_task_handler_mobile/data/mock_tasks.dart';
+import 'package:provider/provider.dart';
 import 'package:smart_task_handler_mobile/main.dart';
+import 'package:smart_task_handler_mobile/models/task_model.dart';
 import 'package:smart_task_handler_mobile/router.dart';
 import 'package:smart_task_handler_mobile/screens/task_form_screen.dart';
+import 'package:smart_task_handler_mobile/screens/task_list_screen.dart';
 
 void main() {
-  testWidgets('L3 login, task route, validation and mock-only submit', (
+  testWidgets('L3 login and validation with L4 repository submit', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(430, 1100);
@@ -67,7 +69,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Складские задачи'), findsOneWidget);
 
-    final countBefore = mockTasks.length;
+    final taskModel = Provider.of<TaskModel>(
+      tester.element(find.byType(TaskListPage)),
+      listen: false,
+    );
+    final countBefore = taskModel.tasks.length;
     await tester.tap(find.text('Новая задача'));
     await tester.pumpAndSettle();
     expect(find.byType(TaskFormPage), findsOneWidget);
@@ -129,14 +135,11 @@ void main() {
       scrollable: formScroll,
     );
     await tester.tap(find.text('Создать задачу'));
+    await tester.pump(const Duration(milliseconds: 800));
     await tester.pumpAndSettle();
     expect(find.text('Складские задачи'), findsOneWidget);
-    expect(mockTasks.length, countBefore);
-    expect(find.text('Переместить груз'), findsNothing);
-    expect(
-      find.text('Данные проверены. Создание задачи пока недоступно.'),
-      findsOneWidget,
-    );
+    expect(taskModel.tasks.length, countBefore + 1);
+    expect(taskModel.tasks.last.title, 'Переместить груз');
 
     final search = find.byWidgetPredicate(
       (widget) =>

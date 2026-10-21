@@ -33,5 +33,20 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Собрать заказ №1042'), findsOneWidget);
     expect(find.text('2 выполнено'), findsOneWidget);
+
+    await tester.tap(find.text('Собрать заказ №1042'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Удалить задачу'));
+    await tester.tap(find.text('Удалить задачу'));
+    await tester.pumpAndSettle();
+    expect(find.text('Удалить задачу?'), findsOneWidget);
+    await tester.tap(find.text('Удалить'));
+    await tester.pump(const Duration(milliseconds: 800));
+    await tester.pumpAndSettle();
+    expect(find.text('Собрать заказ №1042'), findsNothing);
+    expect(find.text('1 выполнено'), findsOneWidget);
+    await tester.tap(find.text('Задачи'));
+    await tester.pumpAndSettle();
+    expect(find.text('Собрать заказ №1042'), findsNothing);
   });
 }

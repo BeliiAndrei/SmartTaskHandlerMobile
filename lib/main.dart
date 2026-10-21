@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'data/mock_tasks.dart';
+import 'data/mock_warehouse_task_repository.dart';
+import 'data/warehouse_task_repository.dart';
 import 'models/task_model.dart';
 import 'router.dart';
 import 'services/favorite_repository.dart';
@@ -32,10 +33,12 @@ Future<void> main() async {
 class SmartTaskHandlerApp extends StatelessWidget {
   const SmartTaskHandlerApp({
     super.key,
+    this.taskRepository,
     this.favoriteStore,
     this.unsellableStore,
   });
 
+  final WarehouseTaskRepository? taskRepository;
   final FavoriteStore? favoriteStore;
   final UnsellableStore? unsellableStore;
 
@@ -43,8 +46,16 @@ class SmartTaskHandlerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     const primary = Color(0xFF3157D5);
 
-    return ChangeNotifierProvider(
-      create: (_) => TaskModel(createMockTasks()),
+    final repository = taskRepository ?? MockWarehouseTaskRepository();
+
+    return MultiProvider(
+      providers: [
+        Provider<WarehouseTaskRepository>.value(value: repository),
+        ChangeNotifierProvider(
+          create: (context) =>
+              TaskModel(context.read<WarehouseTaskRepository>())..load(),
+        ),
+      ],
       child: UnsellableScope(
         store: unsellableStore ?? defaultUnsellableStore,
         child: FavoritesScope(

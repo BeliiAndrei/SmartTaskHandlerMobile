@@ -8,6 +8,7 @@ import '../widgets/favorite_actions.dart';
 import '../widgets/favorites_scope.dart';
 import '../widgets/favorite_button.dart';
 import '../widgets/labeled_value_row.dart';
+import '../widgets/task_data_view.dart';
 
 class TaskDetailsPage extends StatelessWidget {
   const TaskDetailsPage({super.key, required this.id});
@@ -16,7 +17,13 @@ class TaskDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final task = context.watch<TaskModel>().byId(id);
+    return TaskDataView(
+      builder: (context, model) => _buildDetails(context, model),
+    );
+  }
+
+  Widget _buildDetails(BuildContext context, TaskModel model) {
+    final task = model.byId(id);
     if (task == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Задача не найдена')),
@@ -163,6 +170,15 @@ class TaskDetailsPage extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 54,
+            child: OutlinedButton.icon(
+              onPressed: () => _deleteTask(context, task.id),
+              icon: const Icon(Icons.delete_outline_rounded),
+              label: const Text('Удалить задачу'),
+            ),
+          ),
         ],
       ),
     );
@@ -174,5 +190,34 @@ class TaskDetailsPage extends StatelessWidget {
 
   void _changeStatus(BuildContext context) {
     context.push('${GoRouterState.of(context).uri.path}/status');
+  }
+
+  Future<void> _deleteTask(BuildContext context, int taskId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Удалить задачу?'),
+        content: const Text('Задача исчезнет из списка и истории.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Отмена'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Удалить'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    final error = await context.read<TaskModel>().remove(taskId);
+    if (!context.mounted) return;
+    if (error != null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error)));
+      return;
+    }
+    context.pop();
   }
 }

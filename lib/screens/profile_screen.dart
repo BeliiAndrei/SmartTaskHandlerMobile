@@ -2,17 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../data/mock_warehouse_task_repository.dart';
+import '../data/warehouse_task_repository.dart';
 import '../models/task_model.dart';
 import '../widgets/labeled_value_row.dart';
+import '../widgets/task_data_view.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
   @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  @override
   Widget build(BuildContext context) {
-    final model = context.watch<TaskModel>();
-    final completed = model.completedCount;
-    final active = model.activeCount;
+    final repository = context.watch<WarehouseTaskRepository>();
+    final mockRepository = repository is MockWarehouseTaskRepository
+        ? repository
+        : null;
 
     return ListView(
       padding: const EdgeInsets.all(20),
@@ -56,26 +65,28 @@ class ProfilePage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _ProfileStat(
-                value: active.toString(),
-                label: 'Активные',
-                icon: Icons.pending_actions_rounded,
-                color: const Color(0xFF3157D5),
+        TaskDataView(
+          builder: (context, model) => Row(
+            children: [
+              Expanded(
+                child: _ProfileStat(
+                  value: model.activeCount.toString(),
+                  label: 'Активные',
+                  icon: Icons.pending_actions_rounded,
+                  color: const Color(0xFF3157D5),
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _ProfileStat(
-                value: completed.toString(),
-                label: 'Выполнено',
-                icon: Icons.task_alt_rounded,
-                color: const Color(0xFF16A34A),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _ProfileStat(
+                  value: model.completedCount.toString(),
+                  label: 'Выполнено',
+                  icon: Icons.task_alt_rounded,
+                  color: const Color(0xFF16A34A),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         const SizedBox(height: 16),
         Container(
@@ -108,6 +119,18 @@ class ProfilePage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 24),
+        SwitchListTile(
+          title: const Text('Симулировать сбой сети'),
+          subtitle: const Text('Проверка ошибки и повторной загрузки'),
+          value: mockRepository?.simulateError ?? false,
+          onChanged: mockRepository == null
+              ? null
+              : (value) {
+                  setState(() => mockRepository.simulateError = value);
+                  context.read<TaskModel>().load();
+                },
+        ),
+        const SizedBox(height: 16),
         SizedBox(
           height: 52,
           child: OutlinedButton.icon(

@@ -107,7 +107,9 @@ void main() {
       tester.element(find.byType(TaskCard).first),
       listen: false,
     );
-    taskModel.updateStatus(1042, TaskStatus.completed);
+    final statusUpdate = taskModel.updateStatus(1042, TaskStatus.completed);
+    await tester.pump(const Duration(milliseconds: 800));
+    await statusUpdate;
     await tester.pumpAndSettle();
     expect(find.text('Выполнена'), findsOneWidget);
     await tester.tap(find.text('Собрать заказ №1042'));

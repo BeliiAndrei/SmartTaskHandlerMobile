@@ -2,13 +2,6 @@ import '../models/warehouse_task.dart';
 
 final List<WarehouseTask> mockTasks = createMockTasks();
 
-WarehouseTask? findMockTask(int id) {
-  for (final task in mockTasks) {
-    if (task.id == id) return task;
-  }
-  return null;
-}
-
 List<WarehouseTask> createMockTasks({DateTime? now}) {
   final currentDate = now ?? DateTime.now();
   final today = DateTime(currentDate.year, currentDate.month, currentDate.day);

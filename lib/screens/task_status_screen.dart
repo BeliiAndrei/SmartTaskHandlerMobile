@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../models/task_model.dart';
 import '../models/warehouse_task.dart';
+import '../widgets/task_data_view.dart';
 
 class TaskStatusPage extends StatefulWidget {
   const TaskStatusPage({super.key, required this.id});
@@ -15,23 +16,25 @@ class TaskStatusPage extends StatefulWidget {
 }
 
 class _TaskStatusPageState extends State<TaskStatusPage> {
-  late TaskStatus _selectedStatus;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedStatus =
-        context.read<TaskModel>().byId(widget.id)?.status ?? TaskStatus.newTask;
-  }
+  TaskStatus? _selectedStatus;
+  bool _saving = false;
 
   @override
   Widget build(BuildContext context) {
-    if (context.watch<TaskModel>().byId(widget.id) == null) {
+    return TaskDataView(
+      builder: (context, model) => _buildStatus(context, model),
+    );
+  }
+
+  Widget _buildStatus(BuildContext context, TaskModel model) {
+    final task = model.byId(widget.id);
+    if (task == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Задача не найдена')),
         body: Center(child: Text('Задача №${widget.id} отсутствует')),
       );
     }
+    _selectedStatus ??= task.status;
     return Scaffold(
       appBar: AppBar(title: const Text('Изменение статуса')),
       body: ListView(
@@ -57,7 +60,7 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
             icon: Icons.fiber_new_rounded,
             color: const Color(0xFF3157D5),
             value: TaskStatus.newTask,
-            groupValue: _selectedStatus,
+            groupValue: _selectedStatus!,
             onChanged: _selectStatus,
           ),
           _StatusOption(
@@ -66,7 +69,7 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
             icon: Icons.play_circle_outline_rounded,
             color: const Color(0xFF7C3AED),
             value: TaskStatus.inProgress,
-            groupValue: _selectedStatus,
+            groupValue: _selectedStatus!,
             onChanged: _selectStatus,
           ),
           _StatusOption(
@@ -75,7 +78,7 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
             icon: Icons.pause_circle_outline_rounded,
             color: const Color(0xFF64748B),
             value: TaskStatus.paused,
-            groupValue: _selectedStatus,
+            groupValue: _selectedStatus!,
             onChanged: _selectStatus,
           ),
           _StatusOption(
@@ -84,7 +87,7 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
             icon: Icons.check_circle_outline_rounded,
             color: const Color(0xFF16A34A),
             value: TaskStatus.completed,
-            groupValue: _selectedStatus,
+            groupValue: _selectedStatus!,
             onChanged: _selectStatus,
           ),
         ],
@@ -94,7 +97,7 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
         child: SizedBox(
           height: 54,
           child: FilledButton(
-            onPressed: _save,
+            onPressed: _saving ? null : _save,
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFF3157D5),
             ),
@@ -112,8 +115,19 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
     setState(() => _selectedStatus = status);
   }
 
-  void _save() {
-    context.read<TaskModel>().updateStatus(widget.id, _selectedStatus);
+  Future<void> _save() async {
+    setState(() => _saving = true);
+    final error = await context.read<TaskModel>().updateStatus(
+      widget.id,
+      _selectedStatus!,
+    );
+    if (!mounted) return;
+    setState(() => _saving = false);
+    if (error != null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error)));
+      return;
+    }
     ScaffoldMessenger.of(context)
         .showSnackBar(const SnackBar(content: Text('Статус задачи обновлён')));
     context.pop();
