@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'data/mock_warehouse_task_repository.dart';
 import 'data/warehouse_task_repository.dart';
 import 'models/task_model.dart';
+import 'models/session_model.dart';
 import 'router.dart';
 import 'services/favorite_repository.dart';
 import 'services/favorite_store.dart';
@@ -50,6 +51,7 @@ class SmartTaskHandlerApp extends StatelessWidget {
 
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => SessionModel()),
         Provider<WarehouseTaskRepository>.value(value: repository),
         ChangeNotifierProvider(
           create: (context) =>

@@ -27,9 +27,9 @@ void main() {
 
     await tester.enterText(
       find.byType(TextFormField).at(0),
-      'worker@example.com',
+      'admin@smarttask.local',
     );
-    await tester.enterText(find.byType(TextFormField).at(1), 'secret1');
+    await tester.enterText(find.byType(TextFormField).at(1), 'admin123');
     await tester.ensureVisible(find.text('Войти'));
     await tester.tap(find.text('Войти'));
     await tester.pumpAndSettle();
@@ -199,12 +199,10 @@ void main() {
     expect(find.text('Неверный номер задачи: not-a-number'), findsOneWidget);
     router.go('/tasks/999999');
     await tester.pumpAndSettle();
-    expect(
-      find.text('Задача №999999 отсутствует'),
-      findsOneWidget,
-    );
+    expect(find.text('Задача №999999 отсутствует'), findsOneWidget);
     router.go('/history/1041');
     await tester.pumpAndSettle();
-    expect(find.text('Задача №1041'), findsOneWidget);
+    expect(find.text('Складские задачи'), findsOneWidget);
+    expect(find.text('История'), findsNothing);
   });
 }

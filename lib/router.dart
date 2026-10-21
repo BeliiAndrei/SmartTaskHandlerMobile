@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+
+import 'models/session_model.dart';
 
 import 'screens/auth_screen.dart';
 import 'screens/favorites_screen.dart';
@@ -17,6 +20,14 @@ import 'widgets/app_shell.dart';
 // One route table for the whole app. Only stable task ids travel in URLs.
 final router = GoRouter(
   initialLocation: '/login',
+  redirect: (context, state) {
+    final path = state.uri.path;
+    if ((path == '/history' || path.startsWith('/history/')) &&
+        !context.read<SessionModel>().isAdministrator) {
+      return '/tasks';
+    }
+    return null;
+  },
   routes: [
     GoRoute(path: '/login', builder: (context, state) => const AuthPage()),
     GoRoute(

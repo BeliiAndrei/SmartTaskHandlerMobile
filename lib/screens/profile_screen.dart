@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../data/mock_warehouse_task_repository.dart';
 import '../data/warehouse_task_repository.dart';
 import '../models/task_model.dart';
+import '../models/session_model.dart';
 import '../widgets/labeled_value_row.dart';
 import '../widgets/task_data_view.dart';
 
@@ -19,6 +20,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     final repository = context.watch<WarehouseTaskRepository>();
+    final role = context.watch<SessionModel>().role;
     final mockRepository = repository is MockWarehouseTaskRepository
         ? repository
         : null;
@@ -96,24 +98,32 @@ class _ProfilePageState extends State<ProfilePage> {
             borderRadius: BorderRadius.circular(18),
             border: Border.all(color: const Color(0xFFE0E5EF)),
           ),
-          child: const Column(
+          child: Column(
             children: [
-              LabeledValueRow(
+              const LabeledValueRow(
                 icon: Icons.badge_outlined,
                 label: 'Логин',
                 value: 'belii.andrei',
               ),
-              Divider(height: 28),
-              LabeledValueRow(
+              const Divider(height: 28),
+              const LabeledValueRow(
                 icon: Icons.warehouse_outlined,
                 label: 'Подразделение',
                 value: 'Основной склад',
               ),
-              Divider(height: 28),
-              LabeledValueRow(
+              const Divider(height: 28),
+              const LabeledValueRow(
                 icon: Icons.groups_outlined,
                 label: 'Группа',
                 value: 'TI-235',
+              ),
+              const Divider(height: 28),
+              LabeledValueRow(
+                icon: Icons.admin_panel_settings_outlined,
+                label: 'Роль',
+                value: role == UserRole.administrator
+                    ? 'Администратор'
+                    : 'Пользователь',
               ),
             ],
           ),
@@ -178,7 +188,10 @@ class _ProfilePageState extends State<ProfilePage> {
       },
     );
 
-    if (confirmed == true && context.mounted) context.go('/login');
+    if (confirmed == true && context.mounted) {
+      context.read<SessionModel>().signOut();
+      context.go('/login');
+    }
   }
 }
 

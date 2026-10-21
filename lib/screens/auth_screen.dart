@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+
+import '../models/session_model.dart';
 
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key, this.isRegistration = false});
@@ -33,7 +36,12 @@ class _AuthPageState extends State<AuthPage> {
 
   void _submit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-
+    final session = context.read<SessionModel>();
+    if (_isLogin) {
+      session.signIn(_emailController.text, _passwordController.text);
+    } else {
+      session.register();
+    }
     context.go('/tasks');
   }
 
@@ -104,6 +112,17 @@ class _AuthPageState extends State<AuthPage> {
                                     fontSize: 14,
                                   ),
                                 ),
+                                if (_isLogin) ...[
+                                  const SizedBox(height: 8),
+                                  const Text(
+                                    'Тестовый администратор: admin@smarttask.local / admin123',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: Color(0xFF6B7280),
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
                                 const SizedBox(height: 26),
                                 const Text(
                                   'E-mail',

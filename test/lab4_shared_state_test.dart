@@ -12,8 +12,15 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
+    router.go('/login');
     await tester.pumpWidget(const SmartTaskHandlerApp());
-    router.go('/tasks');
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byType(TextFormField).at(0),
+      'admin@smarttask.local',
+    );
+    await tester.enterText(find.byType(TextFormField).at(1), 'admin123');
+    await tester.tap(find.text('Войти'));
     await tester.pumpAndSettle();
     expect(find.text('5'), findsOneWidget); // Active task count in AppBar.
 
