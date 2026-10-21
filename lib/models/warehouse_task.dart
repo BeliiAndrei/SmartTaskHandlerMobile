@@ -24,6 +24,7 @@ class WarehouseTask {
   final bool isFavorite;
 
   WarehouseTask copyWith({
+    int? id,
     String? title,
     String? description,
     TaskPriority? priority,
@@ -33,7 +34,7 @@ class WarehouseTask {
     bool? isFavorite,
   }) {
     return WarehouseTask(
-      id: id,
+      id: id ?? this.id,
       title: title ?? this.title,
       description: description ?? this.description,
       priority: priority ?? this.priority,
