@@ -40,6 +40,11 @@ notes.MapGet("/{id:long}", Notes.GetOne);
 notes.MapPut("/{id:long}", Notes.Update);
 notes.MapDelete("/{id:long}", Notes.Delete);
 
+// Shared warehouse location catalogue. Every reader must have a valid token.
+var locations = app.MapGroup("/locations").AddEndpointFilter(Auth.RequireAuth);
+locations.MapGet("", Locations.List);
+locations.MapGet("/{id:long}", Locations.GetOne);
+
 app.MapPost("/files", Files.Upload).AddEndpointFilter(Auth.RequireAuth);
 app.MapGet("/files/{id:long}", Files.Download); // public on purpose (images by URL)
 

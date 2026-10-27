@@ -43,6 +43,21 @@ public static class Db
               path       TEXT    NOT NULL,
               created_at TEXT    NOT NULL
             );
+
+            -- Shared warehouse catalogue. QR values are the exact strings printed at a point.
+            CREATE TABLE IF NOT EXISTS locations (
+              id            INTEGER PRIMARY KEY,
+              name          TEXT    NOT NULL,
+              zone          TEXT    NOT NULL,
+              qr_code_value TEXT    NOT NULL UNIQUE
+            );
+
+            INSERT OR IGNORE INTO locations (id, name, zone, qr_code_value) VALUES
+              (1, 'Приёмка A1', 'A', 'STH-LOC-A1'),
+              (2, 'Стеллаж A2', 'A', 'STH-LOC-A2'),
+              (3, 'Стеллаж B1', 'B', 'STH-LOC-B1'),
+              (4, 'Упаковка B2', 'B', 'STH-LOC-B2'),
+              (5, 'Отгрузка C1', 'C', 'STH-LOC-C1');
             """;
         cmd.ExecuteNonQuery();
     }
@@ -55,6 +70,8 @@ public static class Db
     {
         var conn = new SqliteConnection(_connectionString);
         conn.Open();
+        using (var pragma = conn.Cmd("PRAGMA foreign_keys = ON"))
+            pragma.ExecuteNonQuery();
         return conn;
     }
 
