@@ -1,0 +1,8 @@
+# .NET tooling
+bin/
+obj/
+
+# Runtime data (created automatically on first start)
+app.db
+app.db-*
+uploads/
