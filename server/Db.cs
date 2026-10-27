@@ -23,6 +23,7 @@ public static class Db
               email         TEXT    NOT NULL UNIQUE,
               password_hash TEXT    NOT NULL,
               name          TEXT    NOT NULL,
+              role          TEXT    NOT NULL DEFAULT 'user' CHECK (role IN ('administrator', 'user')),
               created_at    TEXT    NOT NULL
             );
 
@@ -58,8 +59,55 @@ public static class Db
               (3, 'Стеллаж B1', 'B', 'STH-LOC-B1'),
               (4, 'Упаковка B2', 'B', 'STH-LOC-B2'),
               (5, 'Отгрузка C1', 'C', 'STH-LOC-C1');
+
+            CREATE TABLE IF NOT EXISTS tasks (
+              id                      INTEGER PRIMARY KEY AUTOINCREMENT,
+              user_id                 INTEGER NOT NULL REFERENCES users (id),
+              title                   TEXT    NOT NULL,
+              description             TEXT    NOT NULL,
+              priority                TEXT    NOT NULL CHECK (priority IN ('low', 'medium', 'high')),
+              status                  TEXT    NOT NULL CHECK (status IN ('new', 'in_progress', 'paused', 'completed')),
+              source_location_id      INTEGER NOT NULL REFERENCES locations (id),
+              destination_location_id INTEGER NOT NULL REFERENCES locations (id),
+              assignee_id             INTEGER NOT NULL REFERENCES users (id),
+              due_at                  TEXT    NOT NULL,
+              created_at              TEXT    NOT NULL,
+              updated_at              TEXT    NOT NULL,
+              completed_at            TEXT
+            );
+
+            CREATE TABLE IF NOT EXISTS task_history (
+              id              INTEGER PRIMARY KEY AUTOINCREMENT,
+              task_id         INTEGER NOT NULL REFERENCES tasks (id) ON DELETE CASCADE,
+              previous_status TEXT,
+              new_status      TEXT    NOT NULL,
+              changed_at      TEXT    NOT NULL,
+              comment         TEXT
+            );
+
+            CREATE TABLE IF NOT EXISTS qr_confirmations (
+              id          INTEGER PRIMARY KEY AUTOINCREMENT,
+              task_id     INTEGER NOT NULL REFERENCES tasks (id) ON DELETE CASCADE,
+              location_id INTEGER NOT NULL REFERENCES locations (id),
+              scanned_at  TEXT    NOT NULL
+            );
+
+            CREATE INDEX IF NOT EXISTS tasks_user_id_idx ON tasks (user_id, id DESC);
+            CREATE INDEX IF NOT EXISTS task_history_task_id_idx ON task_history (task_id, id DESC);
             """;
         cmd.ExecuteNonQuery();
+
+        // The imported template may already have created app.db before L5.
+        // CREATE TABLE IF NOT EXISTS does not add a new column to that database.
+        using var roleColumn = conn.Cmd(
+            "SELECT 1 FROM pragma_table_info('users') WHERE name = 'role'");
+        if (roleColumn.ExecuteScalar() is null)
+        {
+            using var migrate = conn.Cmd(
+                "ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user' " +
+                "CHECK (role IN ('administrator', 'user'))");
+            migrate.ExecuteNonQuery();
+        }
     }
 
     /// <summary>

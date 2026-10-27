@@ -45,6 +45,19 @@ var locations = app.MapGroup("/locations").AddEndpointFilter(Auth.RequireAuth);
 locations.MapGet("", Locations.List);
 locations.MapGet("/{id:long}", Locations.GetOne);
 
+// Warehouse tasks follow the Notes CRUD pattern, including per-user ownership.
+var tasks = app.MapGroup("/tasks").AddEndpointFilter(Auth.RequireAuth);
+tasks.MapGet("", WarehouseTasks.List);
+tasks.MapPost("", WarehouseTasks.Create);
+tasks.MapGet("/{id:long}", WarehouseTasks.GetOne);
+tasks.MapPut("/{id:long}", WarehouseTasks.Update);
+tasks.MapDelete("/{id:long}", WarehouseTasks.Delete);
+tasks.MapPatch("/{id:long}/status", WarehouseTasks.ChangeStatus);
+tasks.MapGet("/{id:long}/history", WarehouseTasks.History);
+tasks.MapPost("/{id:long}/qr-confirmation", WarehouseTasks.ConfirmDestination);
+
+app.MapGet("/profile", Auth.Profile).AddEndpointFilter(Auth.RequireAuth);
+
 app.MapPost("/files", Files.Upload).AddEndpointFilter(Auth.RequireAuth);
 app.MapGet("/files/{id:long}", Files.Download); // public on purpose (images by URL)
 

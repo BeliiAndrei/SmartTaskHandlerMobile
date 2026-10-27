@@ -77,3 +77,60 @@ middleware-ul din `Errors.cs` o transformă în formatul standard de eroare.
 4. Repornește, testează cu `curl` sau cu aplicația ta Flutter, apoi rulează
    din nou suita de conformitate ca să confirmi că contractul de bază încă
    trece.
+
+## SmartTaskHandler: складские маршруты Lab 5
+
+Этот порт расширен предметной областью складских задач. Исходные `/health`,
+`/auth/*`, `/me`, `/notes` и `/files` сохранены. Все маршруты ниже требуют
+`Authorization: Bearer <token>`; задачи принадлежат текущему пользователю.
+Чужой или отсутствующий ID задачи отвечает одинаково: 404 `NOT_FOUND`.
+
+| Метод | Маршрут | Назначение |
+| --- | --- | --- |
+| GET | `/locations?page=&limit=&search=` | Список готовых складских точек |
+| GET | `/locations/{id}` | Точка и её `qrCodeValue` |
+| GET, POST | `/tasks` | Список с пагинацией/поиском; создание |
+| GET, PUT, DELETE | `/tasks/{id}` | Карточка; редактирование; удаление |
+| PATCH | `/tasks/{id}/status` | Смена статуса и запись истории |
+| GET | `/tasks/{id}/history?page=&limit=` | История статусов |
+| POST | `/tasks/{id}/qr-confirmation` | Проверка QR точки назначения |
+| GET | `/profile` | Профиль с ролью |
+
+Списки возвращают `{items, page, limit, total}`. Параметры по умолчанию:
+`page=1`, `limit=20`; лимит ограничен диапазоном 1–100. Поиск задач идёт по
+названию, описанию и названиям/зонам обеих точек. `priority`: `low`, `medium`,
+`high`; `status`: `new`, `in_progress`, `paused`, `completed`.
+
+Создание задачи:
+
+```json
+{
+  "title": "Взять коробку",
+  "description": "Отнести в точку B1",
+  "priority": "high",
+  "sourceLocationId": 1,
+  "destinationLocationId": 3,
+  "dueAt": "2026-11-15T12:00:00Z"
+}
+```
+
+Сервер назначает `id`, `assigneeId` (текущий пользователь), начальный статус
+`new` и временные метки. `PUT /tasks/{id}` принимает те же поля, но статус
+меняется через `PATCH /tasks/{id}/status` с телом
+`{"status":"in_progress","comment":"Начато"}`. Для `completed` сначала
+нужно вызвать `POST /tasks/{id}/qr-confirmation` с телом
+`{"qrCodeValue":"STH-LOC-B1"}` — код должен точно соответствовать конечной
+точке. Если конечная точка задачи изменена, прежнее подтверждение сбрасывается.
+Регистрация всегда создаёт роль `user`; `/profile` возвращает эту роль. Поле
+`role` добавляется и к базе, созданной до расширения.
+
+Проверка после `dotnet run`:
+
+```powershell
+pwsh -NoProfile -File tests/smoke.ps1
+```
+
+Скрипт проверяет базовые маршруты и предметный API, включая поиск, пагинацию,
+изоляцию пользователей, историю, неверный QR и завершение задачи. Оригинальные
+`openapi.yaml` и `conformance/` не входили в предоставленную папку `.NET`;
+для официальной проверки соответствия нужен исходный kit курса.

@@ -11,6 +11,7 @@ namespace PamBackend;
 public record RegisterRequest(string? Email, string? Password, string? Name);
 public record LoginRequest(string? Email, string? Password);
 public record User(long Id, string Email, string Name);
+public record UserProfile(long Id, string Email, string Name, string Role);
 
 public static class Auth
 {
@@ -87,6 +88,20 @@ public static class Auth
         if (!reader.Read()) return Errors.Unauthorized();
         return Results.Json(
             new User(reader.GetInt64(0), reader.GetString(1), reader.GetString(2)));
+    }
+
+    /// <summary>GET /profile exposes the warehouse role without changing /me.</summary>
+    public static IResult Profile(HttpContext context)
+    {
+        using var conn = Db.Open();
+        using var cmd = conn.Cmd(
+            "SELECT id, email, name, role FROM users WHERE id = $id",
+            ("$id", CurrentUserId(context)));
+        using var reader = cmd.ExecuteReader();
+        if (!reader.Read()) return Errors.Unauthorized();
+        return Results.Json(new UserProfile(
+            reader.GetInt64(0), reader.GetString(1),
+            reader.GetString(2), reader.GetString(3)));
     }
 
     // -----------------------------------------------------------------------
