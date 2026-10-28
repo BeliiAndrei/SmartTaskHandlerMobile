@@ -26,7 +26,7 @@ String get apiBaseUrl {
     return configuredApiBaseUrl.replaceFirst(RegExp(r'/$'), '');
   }
   if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-    return 'http://10.0.2.2:8080';
+    return 'http://172.18.5.99:8080';
   }
   return 'http://localhost:8080';
 }
