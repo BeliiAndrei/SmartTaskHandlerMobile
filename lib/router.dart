@@ -29,10 +29,6 @@ GoRouter createRouter({String initialLocation = '/login'}) => GoRouter(
     if (!session.isAuthenticated && path != '/login' && path != '/register') {
       return '/login';
     }
-    if ((path == '/history' || path.startsWith('/history/')) &&
-        !session.isAdministrator) {
-      return '/tasks';
-    }
     return null;
   },
   routes: [

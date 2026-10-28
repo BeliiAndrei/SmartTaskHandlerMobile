@@ -11,7 +11,7 @@ import 'package:smart_task_handler_mobile/screens/task_list_screen.dart';
 import 'support/fake_auth_api.dart';
 
 void main() {
-  testWidgets('history is available only to a local administrator', (
+  testWidgets('history is available to an authenticated worker', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(430, 1100);
@@ -35,13 +35,12 @@ void main() {
     await tester.enterText(find.byType(TextFormField).at(1), 'secret1');
     await tester.tap(find.text('Войти'));
     await tester.pumpAndSettle();
-    expect(find.text('История'), findsNothing);
-    expect(find.byType(NavigationDestination), findsNWidgets(4));
+    expect(find.text('История'), findsOneWidget);
+    expect(find.byType(NavigationDestination), findsNWidgets(5));
 
     router.go('/history/1041');
     await tester.pumpAndSettle();
-    expect(find.text('Складские задачи'), findsOneWidget);
-    expect(find.text('Задача №1041'), findsNothing);
+    expect(find.text('Задача №1041'), findsOneWidget);
 
     await tester.tap(find.text('Профиль'));
     await tester.pumpAndSettle();

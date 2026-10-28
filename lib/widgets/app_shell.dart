@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
-
-import '../models/session_model.dart';
 
 class AppShell extends StatelessWidget {
   const AppShell({super.key, required this.navigationShell});
@@ -11,8 +8,7 @@ class AppShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isAdministrator = context.watch<SessionModel>().isAdministrator;
-    final visibleBranches = [0, 1, 2, if (isAdministrator) 3, 4];
+    final visibleBranches = [0, 1, 2, 3, 4];
     final selectedIndex = visibleBranches.indexOf(navigationShell.currentIndex);
     return Scaffold(
       body: navigationShell,
@@ -36,11 +32,10 @@ class AppShell extends StatelessWidget {
             selectedIcon: Icon(Icons.report_problem_rounded),
             label: 'Неликвид',
           ),
-          if (isAdministrator)
-            const NavigationDestination(
-              icon: Icon(Icons.history_rounded),
-              label: 'История',
-            ),
+          const NavigationDestination(
+            icon: Icon(Icons.history_rounded),
+            label: 'История',
+          ),
           const NavigationDestination(
             icon: Icon(Icons.person_outline_rounded),
             selectedIcon: Icon(Icons.person_rounded),

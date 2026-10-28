@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../models/warehouse_task.dart';
+import '../models/task_model.dart';
 import '../services/task_logic.dart';
 import '../widgets/favorite_actions.dart';
 import '../widgets/favorites_scope.dart';
@@ -17,30 +18,31 @@ class TaskHistoryPage extends StatelessWidget {
       appBar: AppBar(title: const Text('История задач')),
       body: TaskDataView(
         builder: (context, model) =>
-            _historyBody(context, TaskLogic.completedTasks(model.tasks)),
+            _historyBody(context, model, TaskLogic.completedTasks(model.tasks)),
       ),
     );
   }
 
   Widget _historyBody(
     BuildContext context,
+    TaskModel model,
     List<WarehouseTask> completedTasks,
   ) {
     final favorites = FavoritesScope.of(context);
     if (completedTasks.isEmpty) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(32),
+          padding: const EdgeInsets.all(32),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
+              const Icon(
                 Icons.history_toggle_off_rounded,
                 size: 62,
                 color: Color(0xFF98A2B3),
               ),
-              SizedBox(height: 14),
-              Text(
+              const SizedBox(height: 14),
+              const Text(
                 'История пока пуста',
                 style: TextStyle(
                   color: Color(0xFF374151),
@@ -48,11 +50,12 @@ class TaskHistoryPage extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              SizedBox(height: 6),
-              Text(
+              const SizedBox(height: 6),
+              const Text(
                 'Выполненные задачи появятся здесь',
                 style: TextStyle(color: Color(0xFF697386)),
               ),
+              if (model.hasMore) _moreButton(model),
             ],
           ),
         ),
@@ -113,7 +116,17 @@ class TaskHistoryPage extends StatelessWidget {
           ),
           const SizedBox(height: 12),
         ],
+        if (model.hasMore) _moreButton(model),
       ],
     );
   }
+
+  Widget _moreButton(TaskModel model) => TextButton(
+    onPressed: model.isLoadingMore ? null : model.loadMore,
+    child: Text(
+      model.moreError == null
+          ? 'Загрузить ещё задачи'
+          : '${model.moreError} — повторить',
+    ),
+  );
 }

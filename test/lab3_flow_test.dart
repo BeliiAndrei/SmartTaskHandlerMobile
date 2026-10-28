@@ -231,7 +231,6 @@ void main() {
     expect(find.text('Задача не существует'), findsOneWidget);
     router.go('/history/1041');
     await tester.pumpAndSettle();
-    expect(find.text('Складские задачи'), findsOneWidget);
-    expect(find.text('История'), findsNothing);
+    expect(find.text('Задача №1041'), findsOneWidget);
   });
 }
