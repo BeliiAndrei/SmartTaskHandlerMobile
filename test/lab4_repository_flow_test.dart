@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:smart_task_handler_mobile/data/mock_warehouse_task_repository.dart';
+import 'package:provider/provider.dart';
+
+import 'support/mock_warehouse_task_repository.dart';
+
 import 'package:smart_task_handler_mobile/main.dart';
 import 'package:smart_task_handler_mobile/models/session_model.dart';
+import 'package:smart_task_handler_mobile/models/task_model.dart';
 import 'package:smart_task_handler_mobile/router.dart';
 import 'package:smart_task_handler_mobile/screens/task_form_screen.dart';
+import 'package:smart_task_handler_mobile/screens/task_list_screen.dart';
 
 import 'support/fake_auth_api.dart';
 
@@ -32,13 +37,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Собрать заказ №1042'), findsOneWidget);
 
-    await tester.tap(find.text('Профиль'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Симулировать сбой сети'));
+    final model = Provider.of<TaskModel>(
+      tester.element(find.byType(TaskListPage)),
+      listen: false,
+    );
+    repository.simulateError = true;
+    model.load();
     await tester.pump(const Duration(milliseconds: 800));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Задачи'));
     await tester.pumpAndSettle();
     expect(find.text('Сервер не отвечает — повторите попытку'), findsOneWidget);
     await tester.tap(find.text('Повторить'));
@@ -48,12 +53,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Сервер не отвечает — повторите попытку'), findsOneWidget);
 
-    await tester.tap(find.text('Профиль'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Симулировать сбой сети'));
+    repository.simulateError = false;
+    model.load();
     await tester.pump(const Duration(milliseconds: 800));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Задачи'));
     await tester.pumpAndSettle();
     expect(find.text('Собрать заказ №1042'), findsOneWidget);
   });
@@ -85,7 +87,14 @@ void main() {
       find.byType(TextFormField).at(1),
       'Сверить накладную',
     );
-    await tester.enterText(find.byType(TextFormField).at(2), 'A-01');
+    await tester.tap(find.byType(DropdownButtonFormField<int>).at(0));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Приёмка A (A-01)').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(DropdownButtonFormField<int>).at(1));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Отгрузка B (B-01)').last);
+    await tester.pumpAndSettle();
     final formScroll = find
         .descendant(
           of: find.byType(TaskFormPage),
@@ -132,6 +141,7 @@ void main() {
 
     await tester.pumpWidget(
       SmartTaskHandlerApp(
+        taskRepository: MockWarehouseTaskRepository(),
         authApi: FakeAuthApi(),
         sessionModel: SessionModel(initialRole: UserRole.user),
       ),

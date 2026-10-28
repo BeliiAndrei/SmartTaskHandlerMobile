@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 
 import '../models/task_model.dart';
 import '../models/warehouse_task.dart';
+import '../data/result.dart';
+import '../data/warehouse_task_repository.dart';
 import '../utils/task_formatters.dart';
 import '../widgets/task_data_view.dart';
 
@@ -20,9 +22,11 @@ class _TaskFormPageState extends State<TaskFormPage> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
-  late final TextEditingController _zoneController;
   late TaskPriority _priority;
-  late TaskStatus _status;
+  List<WarehouseLocation>? _locations;
+  String? _locationError;
+  int? _sourceId;
+  int? _destinationId;
   DateTime? _dueDate;
   bool _prefilled = false;
   bool _saving = false;
@@ -34,16 +38,14 @@ class _TaskFormPageState extends State<TaskFormPage> {
     super.initState();
     _titleController = TextEditingController();
     _descriptionController = TextEditingController();
-    _zoneController = TextEditingController();
     _priority = TaskPriority.medium;
-    _status = TaskStatus.newTask;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadLocations());
   }
 
   @override
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
-    _zoneController.dispose();
     super.dispose();
   }
 
@@ -55,6 +57,16 @@ class _TaskFormPageState extends State<TaskFormPage> {
   }
 
   Widget _buildForm(BuildContext context, TaskModel model) {
+    if (_locations == null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(_isEditing ? 'Редактирование задачи' : 'Новая задача'),
+        ),
+        body: _locationError == null
+            ? const Center(child: CircularProgressIndicator())
+            : TaskErrorView(message: _locationError!, onRetry: _loadLocations),
+      );
+    }
     final task = _isEditing ? model.byId(widget.taskId!) : null;
     if (_isEditing && task == null) {
       return Scaffold(
@@ -65,9 +77,11 @@ class _TaskFormPageState extends State<TaskFormPage> {
     if (task != null && !_prefilled) {
       _titleController.text = task.title;
       _descriptionController.text = task.description;
-      _zoneController.text = task.zone;
       _priority = task.priority;
-      _status = task.status;
+      _sourceId = task.sourceLocationId == 0 ? 1 : task.sourceLocationId;
+      _destinationId = task.destinationLocationId == 0
+          ? 2
+          : task.destinationLocationId;
       _dueDate = task.dueDate;
       _prefilled = true;
     }
@@ -109,14 +123,41 @@ class _TaskFormPageState extends State<TaskFormPage> {
                   _requiredValidator(value, 'Введите описание'),
             ),
             const SizedBox(height: 18),
-            const _FieldTitle('Зона склада'),
+            const _FieldTitle('Точка отправления'),
             const SizedBox(height: 8),
-            TextFormField(
-              controller: _zoneController,
-              textInputAction: TextInputAction.done,
-              decoration: const InputDecoration(hintText: 'Например: A-03'),
+            DropdownButtonFormField<int>(
+              initialValue: _sourceId,
+              items: _locations!
+                  .map(
+                    (location) => DropdownMenuItem(
+                      value: location.id,
+                      child: Text('${location.name} (${location.zone})'),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (value) => setState(() => _sourceId = value),
               validator: (value) =>
-                  _requiredValidator(value, 'Выберите зону склада'),
+                  value == null ? 'Выберите точку отправления' : null,
+            ),
+            const SizedBox(height: 18),
+            const _FieldTitle('Точка назначения'),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<int>(
+              initialValue: _destinationId,
+              items: _locations!
+                  .map(
+                    (location) => DropdownMenuItem(
+                      value: location.id,
+                      child: Text('${location.name} (${location.zone})'),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (value) => setState(() => _destinationId = value),
+              validator: (value) => value == null
+                  ? 'Выберите точку назначения'
+                  : value == _sourceId
+                  ? 'Точки должны отличаться'
+                  : null,
             ),
             const SizedBox(height: 18),
             const _FieldTitle('Приоритет'),
@@ -141,34 +182,6 @@ class _TaskFormPageState extends State<TaskFormPage> {
                 if (value != null) setState(() => _priority = value);
               },
               validator: (value) => value == null ? 'Выберите приоритет' : null,
-            ),
-            const SizedBox(height: 18),
-            const _FieldTitle('Статус'),
-            const SizedBox(height: 8),
-            DropdownButtonFormField<TaskStatus>(
-              initialValue: _status,
-              items: const [
-                DropdownMenuItem(
-                  value: TaskStatus.newTask,
-                  child: Text('Новая'),
-                ),
-                DropdownMenuItem(
-                  value: TaskStatus.inProgress,
-                  child: Text('В работе'),
-                ),
-                DropdownMenuItem(
-                  value: TaskStatus.paused,
-                  child: Text('Приостановлена'),
-                ),
-                DropdownMenuItem(
-                  value: TaskStatus.completed,
-                  child: Text('Выполнена'),
-                ),
-              ],
-              onChanged: (value) {
-                if (value != null) setState(() => _status = value);
-              },
-              validator: (value) => value == null ? 'Выберите статус' : null,
             ),
             const SizedBox(height: 18),
             const _FieldTitle('Срок выполнения'),
@@ -269,9 +282,13 @@ class _TaskFormPageState extends State<TaskFormPage> {
       title: _titleController.text.trim(),
       description: _descriptionController.text.trim(),
       priority: _priority,
-      status: _status,
+      status: previous?.status ?? TaskStatus.newTask,
       dueDate: _dueDate!,
-      zone: _zoneController.text.trim(),
+      zone: _locations!
+          .firstWhere((location) => location.id == _destinationId)
+          .zone,
+      sourceLocationId: _sourceId!,
+      destinationLocationId: _destinationId!,
       isFavorite: previous?.isFavorite ?? false,
     );
 
@@ -292,6 +309,26 @@ class _TaskFormPageState extends State<TaskFormPage> {
   static String? _requiredValidator(String? value, String message) {
     if (value == null || value.trim().isEmpty) return message;
     return null;
+  }
+
+  Future<void> _loadLocations() async {
+    if (!mounted) return;
+    setState(() {
+      _locationError = null;
+      _locations = null;
+    });
+    final result = await context
+        .read<WarehouseTaskRepository>()
+        .fetchLocations();
+    if (!mounted) return;
+    setState(() {
+      switch (result) {
+        case Ok(value: final value):
+          _locations = value;
+        case Err(msg: final msg):
+          _locationError = msg;
+      }
+    });
   }
 }
 

@@ -1,3 +1,5 @@
+import 'support/mock_warehouse_task_repository.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -18,7 +20,12 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     router.go('/login');
-    await tester.pumpWidget(SmartTaskHandlerApp(authApi: FakeAuthApi()));
+    await tester.pumpWidget(
+      SmartTaskHandlerApp(
+        taskRepository: MockWarehouseTaskRepository(),
+        authApi: FakeAuthApi(),
+      ),
+    );
     await tester.pumpAndSettle();
     await tester.enterText(
       find.byType(TextFormField).at(0),

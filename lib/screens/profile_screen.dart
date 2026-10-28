@@ -3,8 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../data/auth_api.dart';
-import '../data/mock_warehouse_task_repository.dart';
-import '../data/warehouse_task_repository.dart';
 import '../models/task_model.dart';
 import '../models/session_model.dart';
 import '../widgets/labeled_value_row.dart';
@@ -20,11 +18,8 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
-    final repository = context.watch<WarehouseTaskRepository>();
     final role = context.watch<SessionModel>().role;
-    final mockRepository = repository is MockWarehouseTaskRepository
-        ? repository
-        : null;
+    final auth = context.read<AuthApi>();
 
     return ListView(
       padding: const EdgeInsets.all(20),
@@ -36,9 +31,9 @@ class _ProfilePageState extends State<ProfilePage> {
             borderRadius: BorderRadius.circular(22),
             border: Border.all(color: const Color(0xFFE0E5EF)),
           ),
-          child: const Column(
+          child: Column(
             children: [
-              CircleAvatar(
+              const CircleAvatar(
                 radius: 42,
                 backgroundColor: Color(0xFF3157D5),
                 child: Text(
@@ -50,17 +45,17 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Text(
-                'Belii Andrei',
+                auth.profileName ?? 'Пользователь',
                 style: TextStyle(
                   color: Color(0xFF172033),
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
                 ),
               ),
-              SizedBox(height: 5),
-              Text(
+              const SizedBox(height: 5),
+              const Text(
                 'Сотрудник склада',
                 style: TextStyle(color: Color(0xFF697386)),
               ),
@@ -101,10 +96,10 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           child: Column(
             children: [
-              const LabeledValueRow(
+              LabeledValueRow(
                 icon: Icons.badge_outlined,
-                label: 'Логин',
-                value: 'belii.andrei',
+                label: 'Email',
+                value: auth.profileEmail ?? '—',
               ),
               const Divider(height: 28),
               const LabeledValueRow(
@@ -130,18 +125,6 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
         const SizedBox(height: 24),
-        SwitchListTile(
-          title: const Text('Симулировать сбой сети'),
-          subtitle: const Text('Проверка ошибки и повторной загрузки'),
-          value: mockRepository?.simulateError ?? false,
-          onChanged: mockRepository == null
-              ? null
-              : (value) {
-                  setState(() => mockRepository.simulateError = value);
-                  context.read<TaskModel>().load();
-                },
-        ),
-        const SizedBox(height: 16),
         SizedBox(
           height: 52,
           child: OutlinedButton.icon(
@@ -193,6 +176,7 @@ class _ProfilePageState extends State<ProfilePage> {
       await context.read<AuthApi>().logout();
       if (!context.mounted) return;
       context.read<SessionModel>().signOut();
+      context.read<TaskModel>().clear();
       context.go('/login');
     }
   }

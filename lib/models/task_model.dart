@@ -12,9 +12,19 @@ class TaskModel extends ChangeNotifier {
   List<WarehouseTask> _tasks = [];
   bool _loading = false;
   String? _error;
+  String? _search;
+  int _page = 1;
+  static const _limit = 20;
+  bool _hasMore = false;
+  bool _loadingMore = false;
+  String? _moreError;
+  int _requestGeneration = 0;
 
   bool get isLoading => _loading;
   String? get error => _error;
+  bool get hasMore => _hasMore;
+  bool get isLoadingMore => _loadingMore;
+  String? get moreError => _moreError;
   List<WarehouseTask> get tasks => List.unmodifiable(_tasks);
 
   int get completedCount =>
@@ -29,15 +39,41 @@ class TaskModel extends ChangeNotifier {
     return null;
   }
 
-  Future<void> load() async {
+  Future<String?> refreshById(int id) async {
+    switch (await _repository.fetchById(id)) {
+      case Ok(value: final value):
+        final index = _tasks.indexWhere((item) => item.id == id);
+        if (index == -1) {
+          _tasks = [..._tasks, value];
+        } else {
+          _tasks = List.of(_tasks)..[index] = value;
+        }
+        notifyListeners();
+        return null;
+      case Err(msg: final msg):
+        return msg;
+    }
+  }
+
+  Future<void> load({String? search}) async {
+    if (search != null) _search = search.trim();
+    final generation = ++_requestGeneration;
+    _page = 1;
+    _hasMore = false;
+    _loadingMore = false;
+    _moreError = null;
     _loading = true;
     _error = null;
     notifyListeners();
 
-    switch (await _repository.fetchAll()) {
+    final result = await _repository.fetchAll(limit: _limit, search: _search);
+    if (generation != _requestGeneration) return;
+    switch (result) {
       case Ok(value: final value):
         _tasks = List.of(value);
+        _hasMore = value.length == _limit;
       case Err(msg: final msg):
+        _tasks = [];
         _error = msg;
     }
 
@@ -45,11 +81,50 @@ class TaskModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> loadMore() async {
+    if (_loading || _loadingMore || !_hasMore) return;
+    _loadingMore = true; // Called from itemBuilder: do not notify during build.
+    final generation = _requestGeneration;
+    final result = await _repository.fetchAll(
+      page: _page + 1,
+      limit: _limit,
+      search: _search,
+    );
+    if (generation != _requestGeneration) return;
+    _loadingMore = false;
+    switch (result) {
+      case Ok(value: final value):
+        _page++;
+        _tasks = [..._tasks, ...value];
+        _hasMore = value.length == _limit;
+        _moreError = null;
+      case Err(msg: final msg):
+        _moreError = msg;
+    }
+    notifyListeners();
+  }
+
+  void clear() {
+    ++_requestGeneration;
+    _tasks = [];
+    _error = null;
+    _hasMore = false;
+    _loading = false;
+    _loadingMore = false;
+    _moreError = null;
+    _search = null;
+    notifyListeners();
+  }
+
   Future<String?> add(WarehouseTask draft) async {
     switch (await _repository.create(draft)) {
       case Ok(value: final value):
-        _tasks = [..._tasks, value];
-        notifyListeners();
+        if (_search != null && _search!.isNotEmpty) {
+          await load();
+        } else {
+          _tasks = [value, ..._tasks];
+          notifyListeners();
+        }
         return null;
       case Err(msg: final msg):
         return msg;
@@ -63,7 +138,11 @@ class TaskModel extends ChangeNotifier {
         final index = _tasks.indexWhere((current) => current.id == value.id);
         if (index == -1) return 'Задача не существует';
         _tasks = List.of(_tasks)..[index] = value;
-        notifyListeners();
+        if (_search != null && _search!.isNotEmpty) {
+          await load();
+        } else {
+          notifyListeners();
+        }
         return null;
       case Err(msg: final msg):
         return msg;
@@ -85,6 +164,22 @@ class TaskModel extends ChangeNotifier {
   Future<String?> updateStatus(int id, TaskStatus status) async {
     final task = byId(id);
     if (task == null) return 'Задача не существует';
-    return update(task.copyWith(status: status));
+    switch (await _repository.changeStatus(task, status)) {
+      case Ok(value: final value):
+        _tasks = _tasks.map((item) => item.id == id ? value : item).toList();
+        notifyListeners();
+        return null;
+      case Err(msg: final msg):
+        return msg;
+    }
+  }
+
+  Future<String?> confirmDestination(int id, String qr) async {
+    switch (await _repository.confirmDestination(id, qr)) {
+      case Ok():
+        return null;
+      case Err(msg: final msg):
+        return msg;
+    }
   }
 }

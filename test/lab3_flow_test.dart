@@ -1,3 +1,5 @@
+import 'support/mock_warehouse_task_repository.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -19,7 +21,12 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     router.go('/login');
-    await tester.pumpWidget(SmartTaskHandlerApp(authApi: FakeAuthApi()));
+    await tester.pumpWidget(
+      SmartTaskHandlerApp(
+        taskRepository: MockWarehouseTaskRepository(),
+        authApi: FakeAuthApi(),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.byType(NavigationBar), findsNothing);
@@ -68,7 +75,7 @@ void main() {
     await tester.tap(find.text('Изменить статус'));
     await tester.pumpAndSettle();
     expect(find.text('Изменение статуса'), findsOneWidget);
-    await tester.tap(find.text('Выполнена'));
+    await tester.tap(find.text('Приостановлена'));
     await tester.tap(find.text('Сохранить статус'));
     await tester.pumpAndSettle();
     expect(find.text('Задача №1042'), findsOneWidget);
@@ -107,7 +114,8 @@ void main() {
     );
     expect(find.text('Введите название'), findsOneWidget);
     expect(find.text('Введите описание'), findsOneWidget);
-    expect(find.text('Выберите зону склада'), findsOneWidget);
+    expect(find.text('Выберите точку отправления'), findsOneWidget);
+    expect(find.text('Выберите точку назначения'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.text('Выберите срок выполнения'),
       250,
@@ -129,7 +137,14 @@ void main() {
       find.byType(TextFormField).at(1),
       'Взять груз из A и доставить в B',
     );
-    await tester.enterText(find.byType(TextFormField).at(2), 'A-03');
+    await tester.tap(find.byType(DropdownButtonFormField<int>).at(0));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Приёмка A (A-01)').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(DropdownButtonFormField<int>).at(1));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Отгрузка B (B-01)').last);
+    await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.text('Выберите дату'),
       -250,
@@ -149,7 +164,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Складские задачи'), findsOneWidget);
     expect(taskModel.tasks.length, countBefore + 1);
-    expect(taskModel.tasks.last.title, 'Переместить груз');
+    expect(taskModel.tasks.first.title, 'Переместить груз');
 
     final search = find.byWidgetPredicate(
       (widget) =>
@@ -157,6 +172,8 @@ void main() {
           widget.decoration?.hintText == 'Поиск по задачам или зоне',
     );
     await tester.enterText(search, 'поставку');
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pump(const Duration(milliseconds: 800));
     await tester.pumpAndSettle();
     expect(find.text('Найдено: 1'), findsOneWidget);
     await tester.tap(find.text('История'));
@@ -211,7 +228,7 @@ void main() {
     expect(find.text('Неверный номер задачи: not-a-number'), findsOneWidget);
     router.go('/tasks/999999');
     await tester.pumpAndSettle();
-    expect(find.text('Задача №999999 отсутствует'), findsOneWidget);
+    expect(find.text('Задача не существует'), findsOneWidget);
     router.go('/history/1041');
     await tester.pumpAndSettle();
     expect(find.text('Складские задачи'), findsOneWidget);

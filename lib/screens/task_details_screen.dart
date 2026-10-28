@@ -9,25 +9,65 @@ import '../widgets/favorites_scope.dart';
 import '../widgets/favorite_button.dart';
 import '../widgets/labeled_value_row.dart';
 import '../widgets/task_data_view.dart';
+import '../data/result.dart';
+import '../data/warehouse_task_repository.dart';
+import 'task_status_history_sheet.dart';
 
-class TaskDetailsPage extends StatelessWidget {
+class TaskDetailsPage extends StatefulWidget {
   const TaskDetailsPage({super.key, required this.id});
 
   final int id;
 
   @override
+  State<TaskDetailsPage> createState() => _TaskDetailsPageState();
+}
+
+class _TaskDetailsPageState extends State<TaskDetailsPage> {
+  bool _loading = true;
+  String? _detailError;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refresh());
+  }
+
+  Future<void> _refresh() async {
+    if (!mounted) return;
+    setState(() {
+      _loading = true;
+      _detailError = null;
+    });
+    final error = await context.read<TaskModel>().refreshById(widget.id);
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+      _detailError = error;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (_detailError case final message?) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Задача')),
+        body: TaskErrorView(message: message, onRetry: _refresh),
+      );
+    }
     return TaskDataView(
       builder: (context, model) => _buildDetails(context, model),
     );
   }
 
   Widget _buildDetails(BuildContext context, TaskModel model) {
-    final task = model.byId(id);
+    final task = model.byId(widget.id);
     if (task == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Задача не найдена')),
-        body: Center(child: Text('Задача №$id отсутствует')),
+        body: Center(child: Text('Задача №${widget.id} отсутствует')),
       );
     }
     final favorites = FavoritesScope.of(context);
@@ -129,11 +169,16 @@ class TaskDetailsPage extends StatelessWidget {
                   value: formatTaskDate(task.dueDate),
                 ),
                 const Divider(height: 28),
-                LabeledValueRow(
-                  icon: Icons.warehouse_outlined,
-                  label: 'Зона склада',
-                  value: task.zone,
-                ),
+                task.sourceLocationId == 0
+                    ? LabeledValueRow(
+                        icon: Icons.warehouse_outlined,
+                        label: 'Зона склада',
+                        value: task.zone,
+                      )
+                    : _LocationRows(
+                        sourceId: task.sourceLocationId,
+                        destinationId: task.destinationLocationId,
+                      ),
                 const Divider(height: 28),
                 LabeledValueRow(
                   icon: Icons.sync_rounded,
@@ -156,6 +201,19 @@ class TaskDetailsPage extends StatelessWidget {
                 'Изменить статус',
                 style: TextStyle(fontWeight: FontWeight.w700),
               ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 54,
+            child: OutlinedButton.icon(
+              onPressed: () => showModalBottomSheet<void>(
+                context: context,
+                isScrollControlled: true,
+                builder: (_) => TaskStatusHistorySheet(taskId: task.id),
+              ),
+              icon: const Icon(Icons.history),
+              label: const Text('История статусов'),
             ),
           ),
           const SizedBox(height: 12),
@@ -220,4 +278,59 @@ class TaskDetailsPage extends StatelessWidget {
     }
     context.pop();
   }
+}
+
+class _LocationRows extends StatefulWidget {
+  const _LocationRows({required this.sourceId, required this.destinationId});
+  final int sourceId;
+  final int destinationId;
+
+  @override
+  State<_LocationRows> createState() => _LocationRowsState();
+}
+
+class _LocationRowsState extends State<_LocationRows> {
+  late final Future<Result<List<WarehouseLocation>>> _locations;
+
+  @override
+  void initState() {
+    super.initState();
+    _locations = context.read<WarehouseTaskRepository>().fetchLocations();
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      FutureBuilder<Result<List<WarehouseLocation>>>(
+        future: _locations,
+        builder: (context, snapshot) {
+          final locations = switch (snapshot.data) {
+            Ok<List<WarehouseLocation>>(value: final items) => items,
+            _ => <WarehouseLocation>[],
+          };
+          String name(int id) {
+            for (final location in locations) {
+              if (location.id == id) {
+                return '${location.name} (${location.zone})';
+              }
+            }
+            return 'Точка №$id';
+          }
+
+          return Column(
+            children: [
+              LabeledValueRow(
+                icon: Icons.move_up_outlined,
+                label: 'Откуда',
+                value: name(widget.sourceId),
+              ),
+              const Divider(height: 28),
+              LabeledValueRow(
+                icon: Icons.place_outlined,
+                label: 'Куда',
+                value: name(widget.destinationId),
+              ),
+            ],
+          );
+        },
+      );
 }

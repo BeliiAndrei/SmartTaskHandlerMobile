@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../data/auth_api.dart';
 import '../data/result.dart';
 import '../models/session_model.dart';
+import '../models/task_model.dart';
 
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key, this.isRegistration = false});
@@ -70,6 +71,7 @@ class _AuthPageState extends State<AuthPage> {
               ? UserRole.administrator
               : UserRole.user,
         );
+        context.read<TaskModel>().load();
         context.go('/tasks');
       case Err(msg: final msg):
         setState(() => _busy = false);

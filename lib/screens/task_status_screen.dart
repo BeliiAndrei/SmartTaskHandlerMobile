@@ -4,6 +4,9 @@ import 'package:provider/provider.dart';
 
 import '../models/task_model.dart';
 import '../models/warehouse_task.dart';
+import '../data/result.dart';
+import '../data/warehouse_task_repository.dart';
+import 'qr_scan_screen.dart';
 import '../widgets/task_data_view.dart';
 
 class TaskStatusPage extends StatefulWidget {
@@ -18,6 +21,7 @@ class TaskStatusPage extends StatefulWidget {
 class _TaskStatusPageState extends State<TaskStatusPage> {
   TaskStatus? _selectedStatus;
   bool _saving = false;
+  bool _confirmed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -63,6 +67,19 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
             groupValue: _selectedStatus!,
             onChanged: _selectStatus,
           ),
+          if (_selectedStatus == TaskStatus.completed &&
+              task.status != TaskStatus.completed) ...[
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : () => _scan(task),
+              icon: const Icon(Icons.qr_code_scanner),
+              label: Text(
+                _confirmed
+                    ? 'Точка подтверждена'
+                    : 'Сканировать QR точки назначения',
+              ),
+            ),
+          ],
           _StatusOption(
             title: 'В работе',
             subtitle: 'Сотрудник выполняет задачу',
@@ -97,7 +114,13 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
         child: SizedBox(
           height: 54,
           child: FilledButton(
-            onPressed: _saving ? null : _save,
+            onPressed:
+                _saving ||
+                    (_selectedStatus == TaskStatus.completed &&
+                        task.status != TaskStatus.completed &&
+                        !_confirmed)
+                ? null
+                : _save,
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFF3157D5),
             ),
@@ -112,8 +135,46 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
   }
 
   void _selectStatus(TaskStatus status) {
-    setState(() => _selectedStatus = status);
+    setState(() {
+      _selectedStatus = status;
+      if (status != TaskStatus.completed) _confirmed = false;
+    });
   }
+
+  Future<void> _scan(WarehouseTask task) async {
+    final scanned = await Navigator.of(context)
+        .push<String>(MaterialPageRoute(builder: (_) => const QrScanPage()));
+    if (!mounted || scanned == null) return;
+    final destination = await context
+        .read<WarehouseTaskRepository>()
+        .fetchLocation(task.destinationLocationId);
+    if (!mounted) return;
+    switch (destination) {
+      case Err(msg: final msg):
+        _message(msg);
+        return;
+      case Ok(value: final value):
+        if (value.qrCodeValue != scanned) {
+          _message('QR-код не соответствует точке назначения');
+          return;
+        }
+    }
+    setState(() => _saving = true);
+    final error = await context.read<TaskModel>().confirmDestination(
+      task.id,
+      scanned,
+    );
+    if (!mounted) return;
+    setState(() {
+      _saving = false;
+      _confirmed = error == null;
+    });
+    _message(error ?? 'Точка назначения подтверждена');
+  }
+
+  void _message(String message) =>
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
 
   Future<void> _save() async {
     setState(() => _saving = true);

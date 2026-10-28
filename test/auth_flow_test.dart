@@ -1,3 +1,5 @@
+import 'support/mock_warehouse_task_repository.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -35,6 +37,7 @@ void main() {
       });
       await tester.pumpWidget(
         SmartTaskHandlerApp(
+          taskRepository: MockWarehouseTaskRepository(),
           authApi: AuthApi(
             'http://localhost:8080',
             TokenStore(),
@@ -86,6 +89,7 @@ void main() {
     });
     await tester.pumpWidget(
       SmartTaskHandlerApp(
+        taskRepository: MockWarehouseTaskRepository(),
         authApi: AuthApi('http://localhost:8080', TokenStore(), client: client),
       ),
     );
@@ -133,6 +137,7 @@ void main() {
     });
     await tester.pumpWidget(
       SmartTaskHandlerApp(
+        taskRepository: MockWarehouseTaskRepository(),
         authApi: AuthApi('http://localhost:8080', TokenStore(), client: client),
       ),
     );

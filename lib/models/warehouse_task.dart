@@ -11,6 +11,8 @@ class WarehouseTask {
     required this.status,
     required this.dueDate,
     required this.zone,
+    this.sourceLocationId = 0,
+    this.destinationLocationId = 0,
     this.isFavorite = false,
   });
 
@@ -21,7 +23,44 @@ class WarehouseTask {
   final TaskStatus status;
   final DateTime dueDate;
   final String zone;
+  final int sourceLocationId;
+  final int destinationLocationId;
   final bool isFavorite;
+
+  factory WarehouseTask.fromJson(Map<String, dynamic> json) {
+    final destination = json['destinationLocationId'] as int;
+    return WarehouseTask(
+      id: json['id'] as int,
+      title: json['title'] as String,
+      description: json['description'] as String,
+      priority: switch (json['priority'] as String) {
+        'low' => TaskPriority.low,
+        'medium' => TaskPriority.medium,
+        'high' => TaskPriority.high,
+        _ => throw const FormatException('Unknown task priority'),
+      },
+      status: switch (json['status'] as String) {
+        'new' => TaskStatus.newTask,
+        'in_progress' => TaskStatus.inProgress,
+        'paused' => TaskStatus.paused,
+        'completed' => TaskStatus.completed,
+        _ => throw const FormatException('Unknown task status'),
+      },
+      dueDate: DateTime.parse(json['dueAt'] as String),
+      zone: 'Точка №$destination',
+      sourceLocationId: json['sourceLocationId'] as int,
+      destinationLocationId: destination,
+    );
+  }
+
+  Map<String, Object?> toJson() => {
+    'title': title,
+    'description': description,
+    'priority': priority.name,
+    'sourceLocationId': sourceLocationId,
+    'destinationLocationId': destinationLocationId,
+    'dueAt': dueDate.toUtc().toIso8601String(),
+  };
 
   WarehouseTask copyWith({
     int? id,
@@ -31,6 +70,8 @@ class WarehouseTask {
     TaskStatus? status,
     DateTime? dueDate,
     String? zone,
+    int? sourceLocationId,
+    int? destinationLocationId,
     bool? isFavorite,
   }) {
     return WarehouseTask(
@@ -41,6 +82,9 @@ class WarehouseTask {
       status: status ?? this.status,
       dueDate: dueDate ?? this.dueDate,
       zone: zone ?? this.zone,
+      sourceLocationId: sourceLocationId ?? this.sourceLocationId,
+      destinationLocationId:
+          destinationLocationId ?? this.destinationLocationId,
       isFavorite: isFavorite ?? this.isFavorite,
     );
   }

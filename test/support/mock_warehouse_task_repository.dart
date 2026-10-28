@@ -1,9 +1,11 @@
-import '../models/warehouse_task.dart';
-import 'mock_tasks.dart';
-import 'result.dart';
-import 'warehouse_task_repository.dart';
+import 'package:smart_task_handler_mobile/models/warehouse_task.dart';
 
-class MockWarehouseTaskRepository implements WarehouseTaskRepository {
+import 'mock_tasks.dart';
+
+import 'package:smart_task_handler_mobile/data/result.dart';
+import 'package:smart_task_handler_mobile/data/warehouse_task_repository.dart';
+
+class MockWarehouseTaskRepository extends WarehouseTaskRepository {
   MockWarehouseTaskRepository() : _tasks = List.of(mockTasks) {
     _nextId = _tasks.fold<int>(
       1000,
@@ -20,10 +22,42 @@ class MockWarehouseTaskRepository implements WarehouseTaskRepository {
   static const _notFoundError = 'Задача не существует';
 
   @override
-  Future<Result<List<WarehouseTask>>> fetchAll() async {
+  Future<Result<List<WarehouseLocation>>> fetchLocations() async => const Ok([
+    WarehouseLocation(
+      id: 1,
+      name: 'Приёмка A',
+      zone: 'A-01',
+      qrCodeValue: 'STH-LOC-A1',
+    ),
+    WarehouseLocation(
+      id: 2,
+      name: 'Отгрузка B',
+      zone: 'B-01',
+      qrCodeValue: 'STH-LOC-B1',
+    ),
+  ]);
+
+  @override
+  Future<Result<List<WarehouseTask>>> fetchAll({
+    int page = 1,
+    int limit = 20,
+    String? search,
+  }) async {
     await Future<void>.delayed(_latency);
     if (simulateError) return const Err(_networkError);
-    return Ok(List.of(_tasks));
+    final matches = _tasks
+        .where(
+          (task) =>
+              search == null ||
+              search.isEmpty ||
+              task.title.toLowerCase().contains(search.toLowerCase()) ||
+              task.zone.toLowerCase().contains(search.toLowerCase()),
+        )
+        .toList();
+    final start = (page - 1) * limit;
+    return Ok(
+      start >= matches.length ? [] : matches.skip(start).take(limit).toList(),
+    );
   }
 
   @override

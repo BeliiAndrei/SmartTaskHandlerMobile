@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'data/auth_api.dart';
-import 'data/mock_warehouse_task_repository.dart';
+import 'data/http_warehouse_task_repository.dart';
 import 'data/token_store.dart';
 import 'data/warehouse_task_repository.dart';
 import 'models/task_model.dart';
@@ -38,6 +38,17 @@ Future<void> main() async {
   final session = SessionModel(initialRole: loggedIn ? UserRole.user : null);
   final auth = AuthApi(apiBaseUrl, tokens);
   router = createRouter(initialLocation: loggedIn ? '/tasks' : '/login');
+  late final TaskModel tasks;
+  final repository = HttpWarehouseTaskRepository(
+    apiBaseUrl,
+    tokens,
+    onUnauthorized: () {
+      tasks.clear();
+      session.signOut();
+      router.go('/login');
+    },
+  );
+  tasks = TaskModel(repository);
   try {
     await defaultFavoriteStore.load();
   } catch (error) {
@@ -48,7 +59,15 @@ Future<void> main() async {
   } catch (error) {
     debugPrint('Failed to load unsellable reports: $error');
   }
-  runApp(SmartTaskHandlerApp(authApi: auth, sessionModel: session));
+  runApp(
+    SmartTaskHandlerApp(
+      authApi: auth,
+      sessionModel: session,
+      taskRepository: repository,
+      taskModel: tasks,
+    ),
+  );
+  if (loggedIn) await tasks.load();
 
   if (loggedIn) {
     final valid = await auth.validateStoredToken();
@@ -73,6 +92,7 @@ class SmartTaskHandlerApp extends StatelessWidget {
     this.unsellableStore,
     this.authApi,
     this.sessionModel,
+    this.taskModel,
   });
 
   final WarehouseTaskRepository? taskRepository;
@@ -80,12 +100,19 @@ class SmartTaskHandlerApp extends StatelessWidget {
   final UnsellableStore? unsellableStore;
   final AuthApi? authApi;
   final SessionModel? sessionModel;
+  final TaskModel? taskModel;
 
   @override
   Widget build(BuildContext context) {
     const primary = Color(0xFF3157D5);
 
-    final repository = taskRepository ?? MockWarehouseTaskRepository();
+    final repository =
+        taskRepository ??
+        HttpWarehouseTaskRepository(
+          apiBaseUrl,
+          TokenStore(),
+          onUnauthorized: () => router.go('/login'),
+        );
     final auth = authApi ?? AuthApi(apiBaseUrl, TokenStore());
 
     return MultiProvider(
@@ -95,7 +122,8 @@ class SmartTaskHandlerApp extends StatelessWidget {
         Provider<WarehouseTaskRepository>.value(value: repository),
         ChangeNotifierProvider(
           create: (context) =>
-              TaskModel(context.read<WarehouseTaskRepository>())..load(),
+              taskModel ??
+              (TaskModel(context.read<WarehouseTaskRepository>())..load()),
         ),
       ],
       child: UnsellableScope(

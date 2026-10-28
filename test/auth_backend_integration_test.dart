@@ -14,7 +14,10 @@ void main() {
     final tokens = TokenStore();
     final auth = AuthApi('http://127.0.0.1:8080', tokens);
 
-    expect(await auth.register(email, 'secret123', 'Flutter Tester'), isA<Ok<void>>());
+    expect(
+      await auth.register(email, 'secret123', 'Flutter Tester'),
+      isA<Ok<void>>(),
+    );
     expect(await tokens.read(), isNotNull);
     expect(await auth.validateStoredToken(), isTrue);
     await auth.logout();

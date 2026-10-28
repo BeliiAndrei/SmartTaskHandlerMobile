@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:smart_task_handler_mobile/data/mock_warehouse_task_repository.dart';
+
+import 'support/mock_warehouse_task_repository.dart';
+
 import 'package:smart_task_handler_mobile/data/result.dart';
 import 'package:smart_task_handler_mobile/models/warehouse_task.dart';
 

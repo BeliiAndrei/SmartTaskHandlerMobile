@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -20,17 +22,19 @@ class TaskListPage extends StatefulWidget {
 class _TaskListPageState extends State<TaskListPage> {
   final _searchController = TextEditingController();
   TaskStatus? _selectedStatus;
+  Timer? _searchDebounce;
 
   @override
   void dispose() {
     _searchController.dispose();
+    _searchDebounce?.cancel();
     super.dispose();
   }
 
   List<WarehouseTask> _visibleTasks(List<WarehouseTask> tasks) {
     return TaskLogic.filterTasks(
       tasks,
-      query: _searchController.text,
+      query: '', // Search is performed by the backend for all pages.
       status: _selectedStatus,
     );
   }
@@ -117,7 +121,18 @@ class _TaskListPageState extends State<TaskListPage> {
           padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
           child: TextField(
             controller: _searchController,
-            onChanged: (_) => setState(() {}),
+            onChanged: (value) {
+              setState(() {});
+              _searchDebounce?.cancel();
+              _searchDebounce = Timer(
+                const Duration(milliseconds: 350),
+                () => context.read<TaskModel>().load(search: value),
+              );
+            },
+            onSubmitted: (value) {
+              _searchDebounce?.cancel();
+              context.read<TaskModel>().load(search: value);
+            },
             decoration: InputDecoration(
               hintText: 'Поиск по задачам или зоне',
               prefixIcon: const Icon(Icons.search_rounded),
@@ -127,6 +142,7 @@ class _TaskListPageState extends State<TaskListPage> {
                       onPressed: () {
                         _searchController.clear();
                         setState(() {});
+                        context.read<TaskModel>().load(search: '');
                       },
                       icon: const Icon(Icons.close_rounded),
                     ),
@@ -190,13 +206,32 @@ class _TaskListPageState extends State<TaskListPage> {
           ),
         ),
         Expanded(
-          child: visibleTasks.isEmpty
+          child: visibleTasks.isEmpty && !model.hasMore
               ? const _EmptyTaskList()
               : ListView.separated(
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
-                  itemCount: visibleTasks.length,
+                  itemCount: visibleTasks.length + (model.hasMore ? 1 : 0),
                   separatorBuilder: (_, _) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
+                    if (index == visibleTasks.length) {
+                      if (!model.isLoadingMore && model.moreError == null) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted) context.read<TaskModel>().loadMore();
+                        });
+                      }
+                      if (model.moreError case final message?) {
+                        return TextButton(
+                          onPressed: () => context.read<TaskModel>().loadMore(),
+                          child: Text('$message — повторить'),
+                        );
+                      }
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(12),
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
                     final task = visibleTasks[index];
                     return TaskCard(
                       task: task,

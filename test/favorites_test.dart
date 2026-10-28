@@ -1,3 +1,5 @@
+import 'support/mock_warehouse_task_repository.dart';
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -79,7 +81,11 @@ void main() {
     await favorites.load();
     router.go('/login');
     await tester.pumpWidget(
-      SmartTaskHandlerApp(favoriteStore: favorites, authApi: FakeAuthApi()),
+      SmartTaskHandlerApp(
+        taskRepository: MockWarehouseTaskRepository(),
+        favoriteStore: favorites,
+        authApi: FakeAuthApi(),
+      ),
     );
     await tester.pumpAndSettle();
     await tester.enterText(

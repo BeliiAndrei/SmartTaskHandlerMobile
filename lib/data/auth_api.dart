@@ -16,8 +16,12 @@ class AuthApi {
   final TokenStore tokens;
   final http.Client _client;
   String? _profileRole;
+  String? _profileName;
+  String? _profileEmail;
 
   String? get profileRole => _profileRole;
+  String? get profileName => _profileName;
+  String? get profileEmail => _profileEmail;
 
   static const _timeout = Duration(seconds: 8);
 
@@ -33,6 +37,8 @@ class AuthApi {
 
   Future<void> logout() async {
     _profileRole = null;
+    _profileName = null;
+    _profileEmail = null;
     await tokens.clear();
   }
 
@@ -54,6 +60,8 @@ class AuthApi {
       final token = data['token'] as String;
       if (token.isEmpty) throw const FormatException('Empty token');
       _profileRole = null;
+      _profileName = null;
+      _profileEmail = null;
       await tokens.save(token);
       return const Ok(null);
     } on SocketException {
@@ -74,6 +82,8 @@ class AuthApi {
     final token = await tokens.read();
     if (token == null) {
       _profileRole = null;
+      _profileName = null;
+      _profileEmail = null;
       return false;
     }
     try {
@@ -85,6 +95,8 @@ class AuthApi {
           .timeout(_timeout);
       if (response.statusCode == 401) {
         _profileRole = null;
+        _profileName = null;
+        _profileEmail = null;
         await tokens.clear();
         return false;
       }
@@ -96,6 +108,8 @@ class AuthApi {
         throw const FormatException('Unknown role');
       }
       _profileRole = role;
+      _profileName = data['name'] as String?;
+      _profileEmail = data['email'] as String?;
       return true;
     } on SocketException {
       return null;

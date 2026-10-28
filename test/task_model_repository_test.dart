@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:smart_task_handler_mobile/data/mock_warehouse_task_repository.dart';
+
+import 'support/mock_warehouse_task_repository.dart';
+
 import 'package:smart_task_handler_mobile/models/task_model.dart';
 import 'package:smart_task_handler_mobile/models/warehouse_task.dart';
 
@@ -29,7 +31,7 @@ void main() {
       final draft = model.tasks.first.copyWith(id: 0, title: 'Новая задача');
       final oldCount = model.tasks.length;
       expect(await model.add(draft), isNull);
-      final created = model.tasks.last;
+      final created = model.tasks.first;
       expect(model.tasks.length, oldCount + 1);
       expect(created.id, isNot(0));
 

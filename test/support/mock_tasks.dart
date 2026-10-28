@@ -1,4 +1,4 @@
-import '../models/warehouse_task.dart';
+import 'package:smart_task_handler_mobile/models/warehouse_task.dart';
 
 final List<WarehouseTask> mockTasks = createMockTasks();
 
