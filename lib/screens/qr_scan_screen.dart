@@ -13,7 +13,7 @@ class _QrScanPageState extends State<QrScanPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Сканировать точку назначения')),
+    appBar: AppBar(title: const Text('Сканировать QR-код')),
     body: Stack(
       children: [
         MobileScanner(
@@ -40,7 +40,7 @@ class _QrScanPageState extends State<QrScanPage> {
             child: Padding(
               padding: EdgeInsets.all(24),
               child: Text(
-                'Наведите камеру на QR-код конечной складской точки',
+                'Наведите камеру на QR-код для подтверждения',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white,

@@ -4,8 +4,6 @@ import 'package:provider/provider.dart';
 
 import '../models/task_model.dart';
 import '../models/warehouse_task.dart';
-import '../data/result.dart';
-import '../data/warehouse_task_repository.dart';
 import 'qr_scan_screen.dart';
 import '../widgets/task_data_view.dart';
 
@@ -94,41 +92,45 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
             groupValue: _selectedStatus!,
             onChanged: _selectStatus,
           ),
-          if (_selectedStatus == TaskStatus.completed &&
-              task.status != TaskStatus.completed) ...[
-            const SizedBox(height: 12),
-            FilledButton.icon(
-              onPressed: _saving ? null : () => _scan(task),
-              icon: const Icon(Icons.qr_code_scanner),
-              label: Text(
-                _confirmed
-                    ? 'Точка подтверждена'
-                    : 'Сканировать QR точки назначения',
-              ),
-            ),
-          ],
         ],
       ),
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.all(20),
-        child: SizedBox(
-          height: 54,
-          child: FilledButton(
-            onPressed:
-                _saving ||
-                    (_selectedStatus == TaskStatus.completed &&
-                        task.status != TaskStatus.completed &&
-                        !_confirmed)
-                ? null
-                : _save,
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF3157D5),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (_selectedStatus == TaskStatus.completed &&
+                task.status != TaskStatus.completed) ...[
+              FilledButton.icon(
+                onPressed: _saving ? null : () => _scan(task.id),
+                icon: const Icon(Icons.qr_code_scanner),
+                label: Text(
+                  _confirmed ? 'QR-код подтверждён' : 'Сканировать QR-код',
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+            SizedBox(
+              height: 54,
+              child: FilledButton(
+                onPressed:
+                    _saving ||
+                        (_selectedStatus == TaskStatus.completed &&
+                            task.status != TaskStatus.completed &&
+                            !_confirmed)
+                    ? null
+                    : _save,
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF3157D5),
+                ),
+                child: const Text(
+                  'Сохранить статус',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
             ),
-            child: const Text(
-              'Сохранить статус',
-              style: TextStyle(fontWeight: FontWeight.w700),
-            ),
-          ),
+          ],
         ),
       ),
     );
@@ -141,27 +143,13 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
     });
   }
 
-  Future<void> _scan(WarehouseTask task) async {
+  Future<void> _scan(int taskId) async {
     final scanned = await Navigator.of(context)
         .push<String>(MaterialPageRoute(builder: (_) => const QrScanPage()));
     if (!mounted || scanned == null) return;
-    final destination = await context
-        .read<WarehouseTaskRepository>()
-        .fetchLocation(task.destinationLocationId);
-    if (!mounted) return;
-    switch (destination) {
-      case Err(msg: final msg):
-        _message(msg);
-        return;
-      case Ok(value: final value):
-        if (value.qrCodeValue != scanned) {
-          _message('QR-код не соответствует точке назначения');
-          return;
-        }
-    }
     setState(() => _saving = true);
     final error = await context.read<TaskModel>().confirmDestination(
-      task.id,
+      taskId,
       scanned,
     );
     if (!mounted) return;
@@ -169,7 +157,7 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
       _saving = false;
       _confirmed = error == null;
     });
-    _message(error ?? 'Точка назначения подтверждена');
+    _message(error ?? 'QR-код подтверждён');
   }
 
   void _message(String message) =>

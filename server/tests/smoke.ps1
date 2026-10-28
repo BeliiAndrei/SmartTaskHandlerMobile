@@ -109,6 +109,9 @@ $movedDraft.destinationLocationId = 4
 $moved = Request PUT "/tasks/$secondId" -Token $token -Body $movedDraft
 $staleScan = Request PATCH "/tasks/$secondId/status" -Token $token -Body @{ status = 'completed' }
 Check ($firstScan.Status -eq 201 -and $moved.Status -eq 200 -and $staleScan.Status -eq 400) 'editing destination invalidates old QR'
+$sharedQr = Request POST "/tasks/$secondId/qr-confirmation" -Token $token -Body @{ qrCodeValue = 'STH-LOC-B1' }
+$secondCompleted = Request PATCH "/tasks/$secondId/status" -Token $token -Body @{ status = 'completed' }
+Check ($sharedQr.Status -eq 201 -and $sharedQr.Json.locationId -eq 4 -and $secondCompleted.Status -eq 200 -and $secondCompleted.Json.status -eq 'completed') 'printed demo QR confirms tasks at other destinations'
 
 $deleted = Request DELETE "/tasks/$taskId" -Token $token
 $gone = Request GET "/tasks/$taskId" -Token $token
