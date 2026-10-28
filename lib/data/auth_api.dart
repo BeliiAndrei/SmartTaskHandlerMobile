@@ -18,10 +18,12 @@ class AuthApi {
   String? _profileRole;
   String? _profileName;
   String? _profileEmail;
+  int? _profileId;
 
   String? get profileRole => _profileRole;
   String? get profileName => _profileName;
   String? get profileEmail => _profileEmail;
+  int? get profileId => _profileId;
 
   static const _timeout = Duration(seconds: 8);
 
@@ -39,6 +41,7 @@ class AuthApi {
     _profileRole = null;
     _profileName = null;
     _profileEmail = null;
+    _profileId = null;
     await tokens.clear();
   }
 
@@ -62,6 +65,7 @@ class AuthApi {
       _profileRole = null;
       _profileName = null;
       _profileEmail = null;
+      _profileId = null;
       await tokens.save(token);
       return const Ok(null);
     } on SocketException {
@@ -84,6 +88,7 @@ class AuthApi {
       _profileRole = null;
       _profileName = null;
       _profileEmail = null;
+      _profileId = null;
       return false;
     }
     try {
@@ -97,12 +102,13 @@ class AuthApi {
         _profileRole = null;
         _profileName = null;
         _profileEmail = null;
+        _profileId = null;
         await tokens.clear();
         return false;
       }
       if (response.statusCode != 200) return null;
       final data = jsonDecode(response.body) as Map<String, dynamic>;
-      data['id'] as int;
+      final id = data['id'] as int;
       final role = data['role'] as String;
       if (role != 'user' && role != 'administrator') {
         throw const FormatException('Unknown role');
@@ -110,6 +116,7 @@ class AuthApi {
       _profileRole = role;
       _profileName = data['name'] as String?;
       _profileEmail = data['email'] as String?;
+      _profileId = id;
       return true;
     } on SocketException {
       return null;

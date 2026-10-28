@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -22,12 +20,10 @@ class TaskListPage extends StatefulWidget {
 class _TaskListPageState extends State<TaskListPage> {
   final _searchController = TextEditingController();
   TaskStatus? _selectedStatus;
-  Timer? _searchDebounce;
 
   @override
   void dispose() {
     _searchController.dispose();
-    _searchDebounce?.cancel();
     super.dispose();
   }
 
@@ -84,12 +80,9 @@ class _TaskListPageState extends State<TaskListPage> {
             padding: const EdgeInsets.only(right: 18),
             child: CircleAvatar(
               backgroundColor: const Color(0xFF3157D5),
-              child: Text(
-                'BA',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onPrimary,
-                  fontWeight: FontWeight.w700,
-                ),
+              child: Icon(
+                Icons.person_rounded,
+                color: Theme.of(context).colorScheme.onPrimary,
               ),
             ),
           ),
@@ -121,16 +114,9 @@ class _TaskListPageState extends State<TaskListPage> {
           padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
           child: TextField(
             controller: _searchController,
-            onChanged: (value) {
-              setState(() {});
-              _searchDebounce?.cancel();
-              _searchDebounce = Timer(
-                const Duration(milliseconds: 350),
-                () => context.read<TaskModel>().load(search: value),
-              );
-            },
+            textInputAction: TextInputAction.search,
+            onChanged: (_) => setState(() {}),
             onSubmitted: (value) {
-              _searchDebounce?.cancel();
               context.read<TaskModel>().load(search: value);
             },
             decoration: InputDecoration(

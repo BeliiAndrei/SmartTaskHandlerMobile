@@ -46,8 +46,11 @@ void main() {
             headers: {'content-type': 'application/json; charset=utf-8'},
           );
         }
-        return http.Response(jsonEncode(taskJson), 201,
-          headers: {'content-type': 'application/json; charset=utf-8'});
+        return http.Response(
+          jsonEncode(taskJson),
+          201,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
       });
       final repo = HttpWarehouseTaskRepository(
         'http://example.test',

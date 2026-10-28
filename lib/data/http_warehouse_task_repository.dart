@@ -149,15 +149,32 @@ class HttpWarehouseTaskRepository implements WarehouseTaskRepository {
       );
 
   @override
-  Future<Result<List<TaskHistoryEntry>>> fetchHistory(int taskId) =>
-      _send('GET', '/tasks/$taskId/history', (response) {
-        final items = _object(response)['items'] as List<dynamic>;
-        return items
-            .map(
-              (item) => TaskHistoryEntry.fromJson(item as Map<String, dynamic>),
-            )
-            .toList();
-      });
+  Future<Result<List<TaskHistoryEntry>>> fetchHistory(int taskId) async {
+    const limit = 100;
+    final entries = <TaskHistoryEntry>[];
+    for (var page = 1; ; page++) {
+      final result = await _send(
+        'GET',
+        '/tasks/$taskId/history?page=$page&limit=$limit',
+        (response) {
+          final items = _object(response)['items'] as List<dynamic>;
+          return items
+              .map(
+                (item) =>
+                    TaskHistoryEntry.fromJson(item as Map<String, dynamic>),
+              )
+              .toList();
+        },
+      );
+      switch (result) {
+        case Err(msg: final msg):
+          return Err(msg);
+        case Ok(value: final pageItems):
+          entries.addAll(pageItems);
+          if (pageItems.length < limit) return Ok(entries);
+      }
+    }
+  }
 
   @override
   Future<Result<List<WarehouseLocation>>> fetchLocations() =>

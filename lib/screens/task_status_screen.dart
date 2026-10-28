@@ -67,19 +67,6 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
             groupValue: _selectedStatus!,
             onChanged: _selectStatus,
           ),
-          if (_selectedStatus == TaskStatus.completed &&
-              task.status != TaskStatus.completed) ...[
-            const SizedBox(height: 12),
-            FilledButton.icon(
-              onPressed: _saving ? null : () => _scan(task),
-              icon: const Icon(Icons.qr_code_scanner),
-              label: Text(
-                _confirmed
-                    ? 'Точка подтверждена'
-                    : 'Сканировать QR точки назначения',
-              ),
-            ),
-          ],
           _StatusOption(
             title: 'В работе',
             subtitle: 'Сотрудник выполняет задачу',
@@ -107,6 +94,19 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
             groupValue: _selectedStatus!,
             onChanged: _selectStatus,
           ),
+          if (_selectedStatus == TaskStatus.completed &&
+              task.status != TaskStatus.completed) ...[
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : () => _scan(task),
+              icon: const Icon(Icons.qr_code_scanner),
+              label: Text(
+                _confirmed
+                    ? 'Точка подтверждена'
+                    : 'Сканировать QR точки назначения',
+              ),
+            ),
+          ],
         ],
       ),
       bottomNavigationBar: SafeArea(

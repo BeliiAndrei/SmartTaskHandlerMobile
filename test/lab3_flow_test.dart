@@ -172,7 +172,7 @@ void main() {
           widget.decoration?.hintText == 'Поиск по задачам или зоне',
     );
     await tester.enterText(search, 'поставку');
-    await tester.pump(const Duration(milliseconds: 350));
+    await tester.testTextInput.receiveAction(TextInputAction.search);
     await tester.pump(const Duration(milliseconds: 800));
     await tester.pumpAndSettle();
     expect(find.text('Найдено: 1'), findsOneWidget);

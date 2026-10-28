@@ -36,13 +36,10 @@ class _ProfilePageState extends State<ProfilePage> {
               const CircleAvatar(
                 radius: 42,
                 backgroundColor: Color(0xFF3157D5),
-                child: Text(
-                  'BA',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 25,
-                    fontWeight: FontWeight.w800,
-                  ),
+                child: Icon(
+                  Icons.person_rounded,
+                  color: Colors.white,
+                  size: 42,
                 ),
               ),
               const SizedBox(height: 16),
@@ -56,13 +53,18 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               const SizedBox(height: 5),
               const Text(
-                'Сотрудник склада',
+                'Профиль сотрудника',
                 style: TextStyle(color: Color(0xFF697386)),
               ),
             ],
           ),
         ),
         const SizedBox(height: 16),
+        const Text(
+          'Среди загруженных задач',
+          style: TextStyle(color: Color(0xFF697386)),
+        ),
+        const SizedBox(height: 8),
         TaskDataView(
           builder: (context, model) => Row(
             children: [
@@ -102,16 +104,10 @@ class _ProfilePageState extends State<ProfilePage> {
                 value: auth.profileEmail ?? '—',
               ),
               const Divider(height: 28),
-              const LabeledValueRow(
-                icon: Icons.warehouse_outlined,
-                label: 'Подразделение',
-                value: 'Основной склад',
-              ),
-              const Divider(height: 28),
-              const LabeledValueRow(
-                icon: Icons.groups_outlined,
-                label: 'Группа',
-                value: 'TI-235',
+              LabeledValueRow(
+                icon: Icons.numbers_rounded,
+                label: 'ID пользователя',
+                value: auth.profileId?.toString() ?? '—',
               ),
               const Divider(height: 28),
               LabeledValueRow(

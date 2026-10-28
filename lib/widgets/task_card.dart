@@ -83,7 +83,9 @@ class TaskCard extends StatelessWidget {
                         if (showZone) ...[
                           const SizedBox(height: 5),
                           Text(
-                            'Зона: ${task.zone}',
+                            task.destinationLocationId == 0
+                                ? 'Зона: ${task.zone}'
+                                : 'Назначение: ${task.zone}',
                             style: const TextStyle(
                               color: Color(0xFF697386),
                               fontSize: 13,

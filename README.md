@@ -4,6 +4,7 @@ SmartTaskHandler — мобильное приложение для управл
 Домен: складская логистика / управление задачами
 
 L5 backend: .NET 9 Minimal API в `server/`; запуск: `cd server && dotnet run`.
+Печатный QR и готовая локальная демонстрационная задача: [demo/README.md](demo/README.md).
 
 ## Lab 5: .NET backend и Flutter
 
