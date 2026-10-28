@@ -1,7 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'data/auth_api.dart';
 import 'data/mock_warehouse_task_repository.dart';
+import 'data/token_store.dart';
 import 'data/warehouse_task_repository.dart';
 import 'models/task_model.dart';
 import 'models/session_model.dart';
@@ -16,8 +19,25 @@ import 'widgets/unsellable_scope.dart';
 final defaultFavoriteStore = FavoriteStore(FavoriteRepository());
 final defaultUnsellableStore = UnsellableStore(UnsellableRepository());
 
+const configuredApiBaseUrl = String.fromEnvironment('API_BASE_URL');
+
+String get apiBaseUrl {
+  if (configuredApiBaseUrl.isNotEmpty) {
+    return configuredApiBaseUrl.replaceFirst(RegExp(r'/$'), '');
+  }
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    return 'http://10.0.2.2:8080';
+  }
+  return 'http://localhost:8080';
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final tokens = TokenStore();
+  final loggedIn = await tokens.read() != null;
+  final session = SessionModel(initialRole: loggedIn ? UserRole.user : null);
+  final auth = AuthApi(apiBaseUrl, tokens);
+  router = createRouter(initialLocation: loggedIn ? '/tasks' : '/login');
   try {
     await defaultFavoriteStore.load();
   } catch (error) {
@@ -28,7 +48,21 @@ Future<void> main() async {
   } catch (error) {
     debugPrint('Failed to load unsellable reports: $error');
   }
-  runApp(const SmartTaskHandlerApp());
+  runApp(SmartTaskHandlerApp(authApi: auth, sessionModel: session));
+
+  if (loggedIn) {
+    final valid = await auth.validateStoredToken();
+    if (valid == false) {
+      session.signOut();
+      router.go('/login');
+    } else if (valid == true) {
+      session.signIn(
+        role: auth.profileRole == 'administrator'
+            ? UserRole.administrator
+            : UserRole.user,
+      );
+    }
+  }
 }
 
 class SmartTaskHandlerApp extends StatelessWidget {
@@ -37,21 +71,27 @@ class SmartTaskHandlerApp extends StatelessWidget {
     this.taskRepository,
     this.favoriteStore,
     this.unsellableStore,
+    this.authApi,
+    this.sessionModel,
   });
 
   final WarehouseTaskRepository? taskRepository;
   final FavoriteStore? favoriteStore;
   final UnsellableStore? unsellableStore;
+  final AuthApi? authApi;
+  final SessionModel? sessionModel;
 
   @override
   Widget build(BuildContext context) {
     const primary = Color(0xFF3157D5);
 
     final repository = taskRepository ?? MockWarehouseTaskRepository();
+    final auth = authApi ?? AuthApi(apiBaseUrl, TokenStore());
 
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => SessionModel()),
+        ChangeNotifierProvider(create: (_) => sessionModel ?? SessionModel()),
+        Provider<AuthApi>.value(value: auth),
         Provider<WarehouseTaskRepository>.value(value: repository),
         ChangeNotifierProvider(
           create: (context) =>

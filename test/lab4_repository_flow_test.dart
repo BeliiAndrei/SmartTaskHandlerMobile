@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smart_task_handler_mobile/data/mock_warehouse_task_repository.dart';
 import 'package:smart_task_handler_mobile/main.dart';
+import 'package:smart_task_handler_mobile/models/session_model.dart';
 import 'package:smart_task_handler_mobile/router.dart';
 import 'package:smart_task_handler_mobile/screens/task_form_screen.dart';
+
+import 'support/fake_auth_api.dart';
 
 void main() {
   setUp(() => router.go('/tasks'));
@@ -17,7 +20,13 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     final repository = MockWarehouseTaskRepository();
-    await tester.pumpWidget(SmartTaskHandlerApp(taskRepository: repository));
+    await tester.pumpWidget(
+      SmartTaskHandlerApp(
+        taskRepository: repository,
+        authApi: FakeAuthApi(),
+        sessionModel: SessionModel(initialRole: UserRole.user),
+      ),
+    );
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 800));
     await tester.pumpAndSettle();
@@ -56,7 +65,13 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     final repository = MockWarehouseTaskRepository();
-    await tester.pumpWidget(SmartTaskHandlerApp(taskRepository: repository));
+    await tester.pumpWidget(
+      SmartTaskHandlerApp(
+        taskRepository: repository,
+        authApi: FakeAuthApi(),
+        sessionModel: SessionModel(initialRole: UserRole.user),
+      ),
+    );
     await tester.pump(const Duration(milliseconds: 800));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Новая задача'));
@@ -115,7 +130,12 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(const SmartTaskHandlerApp());
+    await tester.pumpWidget(
+      SmartTaskHandlerApp(
+        authApi: FakeAuthApi(),
+        sessionModel: SessionModel(initialRole: UserRole.user),
+      ),
+    );
     await tester.pump(const Duration(milliseconds: 800));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Собрать заказ №1042'));

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../data/auth_api.dart';
 import '../data/mock_warehouse_task_repository.dart';
 import '../data/warehouse_task_repository.dart';
 import '../models/task_model.dart';
@@ -189,6 +190,8 @@ class _ProfilePageState extends State<ProfilePage> {
     );
 
     if (confirmed == true && context.mounted) {
+      await context.read<AuthApi>().logout();
+      if (!context.mounted) return;
       context.read<SessionModel>().signOut();
       context.go('/login');
     }

@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
 import 'package:smart_task_handler_mobile/main.dart';
+import 'package:smart_task_handler_mobile/models/session_model.dart';
 import 'package:smart_task_handler_mobile/router.dart';
+import 'package:smart_task_handler_mobile/screens/task_list_screen.dart';
+
+import 'support/fake_auth_api.dart';
 
 void main() {
   testWidgets('changing status updates the task list and history', (
@@ -13,7 +18,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     router.go('/login');
-    await tester.pumpWidget(const SmartTaskHandlerApp());
+    await tester.pumpWidget(SmartTaskHandlerApp(authApi: FakeAuthApi()));
     await tester.pumpAndSettle();
     await tester.enterText(
       find.byType(TextFormField).at(0),
@@ -21,6 +26,11 @@ void main() {
     );
     await tester.enterText(find.byType(TextFormField).at(1), 'admin123');
     await tester.tap(find.text('Войти'));
+    await tester.pumpAndSettle();
+    Provider.of<SessionModel>(
+      tester.element(find.byType(TaskListPage)),
+      listen: false,
+    ).signIn(role: UserRole.administrator);
     await tester.pumpAndSettle();
     expect(find.text('5'), findsOneWidget); // Active task count in AppBar.
 

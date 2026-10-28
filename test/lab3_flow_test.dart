@@ -3,9 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_task_handler_mobile/main.dart';
 import 'package:smart_task_handler_mobile/models/task_model.dart';
+import 'package:smart_task_handler_mobile/models/session_model.dart';
 import 'package:smart_task_handler_mobile/router.dart';
 import 'package:smart_task_handler_mobile/screens/task_form_screen.dart';
 import 'package:smart_task_handler_mobile/screens/task_list_screen.dart';
+
+import 'support/fake_auth_api.dart';
 
 void main() {
   testWidgets('L3 login and validation with L4 repository submit', (
@@ -15,7 +18,8 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(const SmartTaskHandlerApp());
+    router.go('/login');
+    await tester.pumpWidget(SmartTaskHandlerApp(authApi: FakeAuthApi()));
     await tester.pumpAndSettle();
 
     expect(find.byType(NavigationBar), findsNothing);
@@ -37,6 +41,12 @@ void main() {
     expect(find.text('Складские задачи'), findsOneWidget);
     expect(find.text('Вход в систему'), findsNothing);
     expect(router.canPop(), isFalse);
+
+    Provider.of<SessionModel>(
+      tester.element(find.byType(TaskListPage)),
+      listen: false,
+    ).signIn(role: UserRole.administrator);
+    await tester.pumpAndSettle();
 
     await tester.tap(find.text('Собрать заказ №1042'));
     await tester.pumpAndSettle();
@@ -175,19 +185,21 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Регистрация сотрудника'), findsOneWidget);
     await tester.enterText(find.byType(TextFormField).at(0), 'worker@invalid');
-    await tester.enterText(find.byType(TextFormField).at(1), 'secret1');
-    await tester.enterText(find.byType(TextFormField).at(2), 'different');
+    await tester.enterText(find.byType(TextFormField).at(2), 'secret1');
+    await tester.enterText(find.byType(TextFormField).at(3), 'different');
     await tester.ensureVisible(find.text('Зарегистрироваться'));
     await tester.tap(find.text('Зарегистрироваться'));
     await tester.pumpAndSettle();
     expect(find.text('Введите корректный e-mail'), findsOneWidget);
+    expect(find.text('Введите имя'), findsOneWidget);
     expect(find.text('Пароли не совпадают'), findsOneWidget);
 
     await tester.enterText(
       find.byType(TextFormField).at(0),
       'worker@example.com',
     );
-    await tester.enterText(find.byType(TextFormField).at(2), 'secret1');
+    await tester.enterText(find.byType(TextFormField).at(1), 'Работник');
+    await tester.enterText(find.byType(TextFormField).at(3), 'secret1');
     await tester.ensureVisible(find.text('Зарегистрироваться'));
     await tester.tap(find.text('Зарегистрироваться'));
     await tester.pumpAndSettle();

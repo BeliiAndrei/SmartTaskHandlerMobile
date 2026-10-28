@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../data/auth_api.dart';
+import '../data/result.dart';
 import '../models/session_model.dart';
 
 class AuthPage extends StatefulWidget {
@@ -15,15 +17,18 @@ class AuthPage extends StatefulWidget {
 
 class _AuthPageState extends State<AuthPage> {
   final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
   bool _hidePassword = true;
+  bool _busy = false;
 
   bool get _isLogin => !widget.isRegistration;
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmController.dispose();
@@ -34,15 +39,43 @@ class _AuthPageState extends State<AuthPage> {
     context.go(isLogin ? '/login' : '/register');
   }
 
-  void _submit() {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
-    final session = context.read<SessionModel>();
-    if (_isLogin) {
-      session.signIn(_emailController.text, _passwordController.text);
-    } else {
-      session.register();
+  Future<void> _submit() async {
+    if (_busy || !(_formKey.currentState?.validate() ?? false)) return;
+    setState(() => _busy = true);
+    final auth = context.read<AuthApi>();
+    final result = _isLogin
+        ? await auth.login(
+            _emailController.text.trim(),
+            _passwordController.text,
+          )
+        : await auth.register(
+            _emailController.text.trim(),
+            _passwordController.text,
+            _nameController.text.trim(),
+          );
+    if (!mounted) return;
+    switch (result) {
+      case Ok():
+        final valid = await auth.validateStoredToken();
+        if (!mounted) return;
+        setState(() => _busy = false);
+        if (valid == false) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Сессия истекла — войдите снова')),
+          );
+          return;
+        }
+        context.read<SessionModel>().signIn(
+          role: auth.profileRole == 'administrator'
+              ? UserRole.administrator
+              : UserRole.user,
+        );
+        context.go('/tasks');
+      case Err(msg: final msg):
+        setState(() => _busy = false);
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(msg)));
     }
-    context.go('/tasks');
   }
 
   @override
@@ -112,17 +145,6 @@ class _AuthPageState extends State<AuthPage> {
                                     fontSize: 14,
                                   ),
                                 ),
-                                if (_isLogin) ...[
-                                  const SizedBox(height: 8),
-                                  const Text(
-                                    'Тестовый администратор: admin@smarttask.local / admin123',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      color: Color(0xFF6B7280),
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
                                 const SizedBox(height: 26),
                                 const Text(
                                   'E-mail',
@@ -151,6 +173,31 @@ class _AuthPageState extends State<AuthPage> {
                                     return null;
                                   },
                                 ),
+                                if (!_isLogin) ...[
+                                  const SizedBox(height: 18),
+                                  const Text(
+                                    'Имя',
+                                    style: TextStyle(
+                                      color: Color(0xFF374151),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  TextFormField(
+                                    controller: _nameController,
+                                    textInputAction: TextInputAction.next,
+                                    decoration: const InputDecoration(
+                                      hintText: 'Ваше имя',
+                                      prefixIcon: Icon(
+                                        Icons.person_outline_rounded,
+                                      ),
+                                    ),
+                                    validator: (value) =>
+                                        value == null || value.trim().isEmpty
+                                        ? 'Введите имя'
+                                        : null,
+                                  ),
+                                ],
                                 const SizedBox(height: 18),
                                 const Text(
                                   'Пароль',
@@ -230,7 +277,7 @@ class _AuthPageState extends State<AuthPage> {
                                 SizedBox(
                                   height: 54,
                                   child: FilledButton(
-                                    onPressed: _submit,
+                                    onPressed: _busy ? null : _submit,
                                     style: FilledButton.styleFrom(
                                       backgroundColor: const Color(0xFF3157D5),
                                       shape: RoundedRectangleBorder(
@@ -241,9 +288,19 @@ class _AuthPageState extends State<AuthPage> {
                                         fontWeight: FontWeight.w700,
                                       ),
                                     ),
-                                    child: Text(
-                                      _isLogin ? 'Войти' : 'Зарегистрироваться',
-                                    ),
+                                    child: _busy
+                                        ? const SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                            ),
+                                          )
+                                        : Text(
+                                            _isLogin
+                                                ? 'Войти'
+                                                : 'Зарегистрироваться',
+                                          ),
                                   ),
                                 ),
                               ],

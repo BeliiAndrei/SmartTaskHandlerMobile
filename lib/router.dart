@@ -17,13 +17,20 @@ import 'screens/unsellable_form_screen.dart';
 import 'screens/unsellable_screen.dart';
 import 'widgets/app_shell.dart';
 
-// One route table for the whole app. Only stable task ids travel in URLs.
-final router = GoRouter(
-  initialLocation: '/login',
+// Main chooses the initial route after reading the saved JWT. Tests may create
+// a fresh router with an explicit initial route.
+GoRouter router = createRouter();
+
+GoRouter createRouter({String initialLocation = '/login'}) => GoRouter(
+  initialLocation: initialLocation,
   redirect: (context, state) {
     final path = state.uri.path;
+    final session = context.read<SessionModel>();
+    if (!session.isAuthenticated && path != '/login' && path != '/register') {
+      return '/login';
+    }
     if ((path == '/history' || path.startsWith('/history/')) &&
-        !context.read<SessionModel>().isAdministrator) {
+        !session.isAdministrator) {
       return '/tasks';
     }
     return null;

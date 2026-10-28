@@ -12,6 +12,8 @@ import 'package:smart_task_handler_mobile/services/favorite_store.dart';
 import 'package:smart_task_handler_mobile/widgets/favorite_button.dart';
 import 'package:smart_task_handler_mobile/widgets/task_card.dart';
 
+import 'support/fake_auth_api.dart';
+
 void main() {
   late Directory directory;
   late FavoriteRepository repository;
@@ -76,7 +78,9 @@ void main() {
     final favorites = FavoriteStore(memoryRepository);
     await favorites.load();
     router.go('/login');
-    await tester.pumpWidget(SmartTaskHandlerApp(favoriteStore: favorites));
+    await tester.pumpWidget(
+      SmartTaskHandlerApp(favoriteStore: favorites, authApi: FakeAuthApi()),
+    );
     await tester.pumpAndSettle();
     await tester.enterText(
       find.byType(TextFormField).at(0),
