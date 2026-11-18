@@ -199,23 +199,27 @@ class _UnsellableFormPageState extends State<UnsellableFormPage> {
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _picking || _saving
-                              ? null
-                              : () => _selectPhoto(ImageSource.camera, field),
-                          icon: const Icon(Icons.photo_camera_outlined),
-                          label: const Text('Камера'),
+                      if (!Platform.isWindows) ...[
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _picking || _saving
+                                ? null
+                                : () => _selectPhoto(ImageSource.camera, field),
+                            icon: const Icon(Icons.photo_camera_outlined),
+                            label: const Text('Камера'),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
+                        const SizedBox(width: 10),
+                      ],
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: _picking || _saving
                               ? null
                               : () => _selectPhoto(ImageSource.gallery, field),
                           icon: const Icon(Icons.photo_library_outlined),
-                          label: const Text('Галерея'),
+                          label: Text(
+                            Platform.isWindows ? 'Выбрать фото' : 'Галерея',
+                          ),
                         ),
                       ),
                     ],
