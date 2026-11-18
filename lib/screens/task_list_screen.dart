@@ -167,11 +167,11 @@ class _TaskListPageState extends State<TaskListPage> {
             ),
           ),
         ),
-        SizedBox(
-          height: 66,
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            scrollDirection: Axis.horizontal,
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 4,
             children: [
               _StatusFilterChip(
                 text: 'Все',
@@ -279,22 +279,19 @@ class _StatusFilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: ChoiceChip(
-        label: Text(text),
-        selected: selected,
-        onSelected: (_) => onSelected(),
-        showCheckmark: false,
-        selectedColor: const Color(0xFF3157D5),
-        backgroundColor: Colors.white,
-        side: const BorderSide(color: Color(0xFFE0E5EF)),
-        labelStyle: TextStyle(
-          color: selected ? Colors.white : const Color(0xFF4B5563),
-          fontWeight: FontWeight.w600,
-        ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+    return ChoiceChip(
+      label: Text(text),
+      selected: selected,
+      onSelected: (_) => onSelected(),
+      showCheckmark: false,
+      selectedColor: const Color(0xFF3157D5),
+      backgroundColor: Colors.white,
+      side: const BorderSide(color: Color(0xFFE0E5EF)),
+      labelStyle: TextStyle(
+        color: selected ? Colors.white : const Color(0xFF4B5563),
+        fontWeight: FontWeight.w600,
       ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
     );
   }
 }
