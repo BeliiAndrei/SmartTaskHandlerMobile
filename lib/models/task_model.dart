@@ -18,12 +18,14 @@ class TaskModel extends ChangeNotifier {
   bool _hasMore = false;
   bool _loadingMore = false;
   String? _moreError;
+  bool _isShowingCachedData = false;
   int _requestGeneration = 0;
 
   bool get isLoading => _loading;
   String? get error => _error;
   bool get hasMore => _hasMore;
   bool get isLoadingMore => _loadingMore;
+  bool get isShowingCachedData => _isShowingCachedData;
   String? get moreError => _moreError;
   List<WarehouseTask> get tasks => List.unmodifiable(_tasks);
 
@@ -48,6 +50,7 @@ class TaskModel extends ChangeNotifier {
         } else {
           _tasks = List.of(_tasks)..[index] = value;
         }
+        _isShowingCachedData = _repository.isShowingCachedData;
         notifyListeners();
         return null;
       case Err(msg: final msg):
@@ -77,6 +80,7 @@ class TaskModel extends ChangeNotifier {
         _error = msg;
     }
 
+    _isShowingCachedData = _repository.isShowingCachedData;
     _loading = false;
     notifyListeners();
   }
@@ -101,6 +105,7 @@ class TaskModel extends ChangeNotifier {
       case Err(msg: final msg):
         _moreError = msg;
     }
+    _isShowingCachedData = _repository.isShowingCachedData;
     notifyListeners();
   }
 
@@ -112,6 +117,7 @@ class TaskModel extends ChangeNotifier {
     _loading = false;
     _loadingMore = false;
     _moreError = null;
+    _isShowingCachedData = false;
     _search = null;
     notifyListeners();
   }

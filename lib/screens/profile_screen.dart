@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../data/auth_api.dart';
+import '../data/warehouse_task_repository.dart';
 import '../models/task_model.dart';
 import '../models/session_model.dart';
 import '../widgets/labeled_value_row.dart';
@@ -120,6 +121,17 @@ class _ProfilePageState extends State<ProfilePage> {
             ],
           ),
         ),
+        if (role == UserRole.administrator) ...[
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 52,
+            child: FilledButton.icon(
+              onPressed: () => context.push('/admin/users'),
+              icon: const Icon(Icons.group_outlined),
+              label: const Text('Зарегистрированные пользователи'),
+            ),
+          ),
+        ],
         const SizedBox(height: 24),
         SizedBox(
           height: 52,
@@ -169,7 +181,10 @@ class _ProfilePageState extends State<ProfilePage> {
     );
 
     if (confirmed == true && context.mounted) {
-      await context.read<AuthApi>().logout();
+      final auth = context.read<AuthApi>();
+      final taskRepository = context.read<WarehouseTaskRepository>();
+      await auth.logout();
+      await taskRepository.clearCachedTasks();
       if (!context.mounted) return;
       context.read<SessionModel>().signOut();
       context.read<TaskModel>().clear();

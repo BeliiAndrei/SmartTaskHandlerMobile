@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 
 import 'models/session_model.dart';
+import 'data/auth_api.dart';
+import 'screens/admin_users_screen.dart';
+import 'state/auth_cubit.dart';
 
 import 'screens/auth_screen.dart';
 import 'screens/favorites_screen.dart';
@@ -29,13 +33,31 @@ GoRouter createRouter({String initialLocation = '/login'}) => GoRouter(
     if (!session.isAuthenticated && path != '/login' && path != '/register') {
       return '/login';
     }
+    if (path.startsWith('/admin/') && !session.isAdministrator) {
+      return '/tasks';
+    }
     return null;
   },
   routes: [
-    GoRoute(path: '/login', builder: (context, state) => const AuthPage()),
+    GoRoute(
+      path: '/login',
+      builder: (context, state) => BlocProvider(
+        create: (context) =>
+            AuthCubit(Provider.of<AuthApi>(context, listen: false)),
+        child: const AuthPage(),
+      ),
+    ),
     GoRoute(
       path: '/register',
-      builder: (context, state) => const AuthPage(isRegistration: true),
+      builder: (context, state) => BlocProvider(
+        create: (context) =>
+            AuthCubit(Provider.of<AuthApi>(context, listen: false)),
+        child: const AuthPage(isRegistration: true),
+      ),
+    ),
+    GoRoute(
+      path: '/admin/users',
+      builder: (context, state) => const AdminUsersPage(),
     ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) =>

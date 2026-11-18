@@ -62,6 +62,43 @@ class WarehouseTask {
     'dueAt': dueDate.toUtc().toIso8601String(),
   };
 
+  /// Complete local representation used by the offline task cache.
+  Map<String, Object?> toCacheJson() => {
+    'id': id,
+    'title': title,
+    'description': description,
+    'priority': priority.name,
+    'status': switch (status) {
+      TaskStatus.newTask => 'new',
+      TaskStatus.inProgress => 'in_progress',
+      TaskStatus.paused => 'paused',
+      TaskStatus.completed => 'completed',
+    },
+    'dueDate': dueDate.toIso8601String(),
+    'zone': zone,
+    'sourceLocationId': sourceLocationId,
+    'destinationLocationId': destinationLocationId,
+  };
+
+  factory WarehouseTask.fromCacheJson(Map<String, dynamic> json) =>
+      WarehouseTask(
+        id: json['id'] as int,
+        title: json['title'] as String,
+        description: json['description'] as String,
+        priority: TaskPriority.values.byName(json['priority'] as String),
+        status: switch (json['status'] as String) {
+          'new' => TaskStatus.newTask,
+          'in_progress' => TaskStatus.inProgress,
+          'paused' => TaskStatus.paused,
+          'completed' => TaskStatus.completed,
+          _ => throw const FormatException('Unknown cached task status'),
+        },
+        dueDate: DateTime.parse(json['dueDate'] as String),
+        zone: json['zone'] as String,
+        sourceLocationId: json['sourceLocationId'] as int,
+        destinationLocationId: json['destinationLocationId'] as int,
+      );
+
   WarehouseTask copyWith({
     int? id,
     String? title,

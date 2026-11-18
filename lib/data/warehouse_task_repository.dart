@@ -2,6 +2,12 @@ import '../models/warehouse_task.dart';
 import 'result.dart';
 
 abstract class WarehouseTaskRepository {
+  /// True after a read has been served from the local task cache.
+  bool get isShowingCachedData => false;
+
+  /// Removes persisted task data for the current local session, when supported.
+  Future<void> clearCachedTasks() async {}
+
   Future<Result<List<WarehouseTask>>> fetchAll({
     int page = 1,
     int limit = 20,

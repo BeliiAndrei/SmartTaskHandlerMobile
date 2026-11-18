@@ -57,6 +57,7 @@ tasks.MapGet("/{id:long}/history", WarehouseTasks.History);
 tasks.MapPost("/{id:long}/qr-confirmation", WarehouseTasks.ConfirmDestination);
 
 app.MapGet("/profile", Auth.Profile).AddEndpointFilter(Auth.RequireAuth);
+app.MapGet("/admin/users", Auth.ListOtherUsers).AddEndpointFilter(Auth.RequireAuth);
 
 app.MapPost("/files", Files.Upload).AddEndpointFilter(Auth.RequireAuth);
 app.MapGet("/files/{id:long}", Files.Download); // public on purpose (images by URL)

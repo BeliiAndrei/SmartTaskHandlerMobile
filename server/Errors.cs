@@ -17,6 +17,9 @@ public static class Errors
     public static IResult Unauthorized(string message = "Missing or invalid token") =>
         Error(401, "UNAUTHORIZED", message);
 
+    public static IResult Forbidden(string message = "Administrator access required") =>
+        Error(403, "FORBIDDEN", message);
+
     public static IResult NotFound(string message = "Resource not found") =>
         Error(404, "NOT_FOUND", message);
 

@@ -14,6 +14,7 @@ String apiMessage(http.Response response, {bool isLogin = false}) {
         isLogin
             ? 'Неверный email или пароль'
             : 'Сессия истекла — войдите снова',
+      'FORBIDDEN' => 'Недостаточно прав для просмотра пользователей',
       'EMAIL_TAKEN' => 'Аккаунт с этим email уже существует',
       'NOT_FOUND' => 'Запись не существует',
       _ => 'Ошибка сервера ($code)',

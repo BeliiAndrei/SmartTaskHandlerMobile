@@ -12,6 +12,7 @@ public record RegisterRequest(string? Email, string? Password, string? Name);
 public record LoginRequest(string? Email, string? Password);
 public record User(long Id, string Email, string Name);
 public record UserProfile(long Id, string Email, string Name, string Role);
+public record RegisteredUser(long Id, string Email, string Name, string Role, string CreatedAt);
 
 public static class Auth
 {
@@ -102,6 +103,29 @@ public static class Auth
         return Results.Json(new UserProfile(
             reader.GetInt64(0), reader.GetString(1),
             reader.GetString(2), reader.GetString(3)));
+    }
+
+    /// <summary>GET /admin/users returns every registered account except the caller.</summary>
+    public static IResult ListOtherUsers(HttpContext context)
+    {
+        var currentId = CurrentUserId(context);
+        using var conn = Db.Open();
+        using (var roleCommand = conn.Cmd("SELECT role FROM users WHERE id = $id", ("$id", currentId)))
+        {
+            var role = roleCommand.ExecuteScalar() as string;
+            if (role is null) return Errors.Unauthorized();
+            if (role != "administrator") return Errors.Forbidden();
+        }
+
+        using var command = conn.Cmd(
+            "SELECT id, email, name, role, created_at FROM users WHERE id <> $id ORDER BY id",
+            ("$id", currentId));
+        using var reader = command.ExecuteReader();
+        var users = new List<RegisteredUser>();
+        while (reader.Read())
+            users.Add(new RegisteredUser(reader.GetInt64(0), reader.GetString(1),
+                reader.GetString(2), reader.GetString(3), reader.GetString(4)));
+        return Results.Json(users);
     }
 
     // -----------------------------------------------------------------------

@@ -110,6 +110,38 @@ class _TaskListPageState extends State<TaskListPage> {
 
     return Column(
       children: [
+        if (model.isShowingCachedData)
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF4D6),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.cloud_off_rounded,
+                  size: 18,
+                  color: Color(0xFF8A5A00),
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Нет связи. Показаны сохранённые задачи; изменения требуют интернета.',
+                    style: TextStyle(color: Color(0xFF704900), fontSize: 12),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Обновить список',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () => context.read<TaskModel>().load(),
+                  icon: const Icon(Icons.refresh_rounded),
+                ),
+              ],
+            ),
+          ),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
           child: TextField(

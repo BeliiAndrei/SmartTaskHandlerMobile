@@ -10,7 +10,7 @@ import 'result.dart';
 import 'token_store.dart';
 import 'warehouse_task_repository.dart';
 
-class HttpWarehouseTaskRepository implements WarehouseTaskRepository {
+class HttpWarehouseTaskRepository extends WarehouseTaskRepository {
   HttpWarehouseTaskRepository(
     this.baseUrl,
     this.tokens, {
